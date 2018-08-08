@@ -32,13 +32,12 @@
 		}
 
 		// if there aren't any slices, tell them
-		if (accounts.count < 1)
-		{
+		if (accounts.count < 1) {
 			[_specifiers addObject:[PSSpecifier preferenceSpecifierNamed:@"No Accounts" target:self set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
 			[self setEditingButtonHidden:YES animated:NO];
-		}
-		else
+		} else {
 			[self setEditingButtonHidden:NO animated:YES];
+		}
 
 		// create "New Account" group
 		PSSpecifier *addAccountGroupSpecifier = [PSSpecifier preferenceSpecifierNamed:@"New Account" target:self set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
@@ -85,10 +84,12 @@
 		{
 			// "Done" key for password field, "Next" key for Apple ID field
 			NSString *identifier = editableCell.specifier.identifier;
-			if ([identifier isEqualToString:PASSWORD_SPECIFIER_IDENTIFIER])
+			if ([identifier isEqualToString:PASSWORD_SPECIFIER_IDENTIFIER]) {
 				[editableCell.textField setReturnKeyType:UIReturnKeyDone];
-			else if ([identifier isEqualToString:APPLE_ID_SPECIFIER_IDENTIFIER])
+			} else if ([identifier isEqualToString:APPLE_ID_SPECIFIER_IDENTIFIER]) {
 				[editableCell.textField setReturnKeyType:UIReturnKeyNext];
+				[editableCell.textField setKeyboardType:UIKeyboardTypeEmailAddress];
+			}
 		}
 	}
 
@@ -99,7 +100,7 @@
 {
 	int index = [self indexForIndexPath:canEditRowAtIndexPath];
 	PSSpecifier *specifier = _specifiers[index];
-	return specifier->cellType == PSListItemCell;
+	return specifier.cellType == PSListItemCell;
 }
 
 - (void)removedSpecifier:(PSSpecifier *)specifier
@@ -140,95 +141,107 @@
 	self.view.userInteractionEnabled = NO;
 
 	// close the keyboard
-	[[[self table] firstResponder] resignFirstResponder];
+	[[self table] resignFirstResponder];
 
 	// get the account proxy
-	Class GKDaemonProxyClass = objc_getClass("GKDaemonProxy");
-	id<GKAccountServicePrivate> accountServicePrivateProxy = [GKDaemonProxyClass accountServicePrivateProxy];
+	if ([objc_getClass("GKDaemonProxy") respondsToSelector:@selector(accountServicePrivateProxy)]) {
+		id<GKAccountServicePrivate> accountServicePrivateProxy = [objc_getClass("GKDaemonProxy") accountServicePrivateProxy];
+		// attempt to authenticate
+		[accountServicePrivateProxy authenticatePlayerWithUsername:self.appleID password:self.password usingFastPath:true handler:^(GKAuthenticateResponse *response, NSError *error) {
+			[self postAuthenticateGameCenter:error];
+		}];
+	} else {
+		id<GKAccountServicePrivate> accountServicePrivateProxy = [[objc_getClass("GKDaemonProxy") proxyForPlayer:nil] accountServicePrivate];
+		[accountServicePrivateProxy authenticatePlayerWithUsername:self.appleID password:self.password handler:^(GKAuthenticateResponse *response, NSError *error) {
+			[self postAuthenticateGameCenter:error];
+		}];
+	}
+	
+}
 
-	// attempt to authenticate
-	[accountServicePrivateProxy authenticatePlayerWithUsername:self.appleID password:self.password usingFastPath:true handler:^(GKAuthenticateResponse *response, NSError *error) {
-		// allow user interaction
-		self.view.userInteractionEnabled = YES;
+- (void)postAuthenticateGameCenter:(NSError *)error {
+	// allow user interaction
+	self.view.userInteractionEnabled = YES;
 
-		// if there was an error, tell them
-		if (error)
+	// if there was an error, tell them
+	if (error)
+	{
+		NSString *message;
+		NSString *title;
+
+		if ([error.domain isEqualToString:GKErrorDomain])
 		{
-			NSString *message;
-			NSString *title;
-
-			if ([error.domain isEqualToString:GKErrorDomain])
+			// connected to server
+			if (error.code != GKErrorInvalidCredentials)
 			{
-				// connected to server
-				if (error.code != GKErrorInvalidCredentials)
+				if (error.code != GKErrorNotAuthenticated)
 				{
-					if (error.code != GKErrorNotAuthenticated)
-					{
-						title = @"Unable to Connect";
-						message = @"Unable to connect to server for unknown reasons.";
-					}
-					else
-					{
-						title = @"Sign In Failed";
-						message = @"Sign in failed for unknown reason. Possible password change?";
-					}
+					title = @"Unable to Connect";
+					message = @"Unable to connect to server for unknown reasons.";
 				}
 				else
 				{
-					title = @"Invalid credentials";
-					message = @"Sign in failed: invalid credentials.";
+					title = @"Sign In Failed";
+					message = @"Sign in failed for unknown reason. Possible password change?";
 				}
 			}
 			else
 			{
-				title = @"Unable to Connect";
-				message = @"Unable to connect to server.";
+				title = @"Invalid credentials";
+				message = @"Sign in failed: invalid credentials.";
 			}
-
-			UIAlertView *alert = [[UIAlertView alloc]
-				initWithTitle:title
-				message:message
-				delegate:nil
-				cancelButtonTitle:@"OK"
-				otherButtonTitles:nil];
-			[alert show];
 		}
 		else
 		{
-			// see if they successfully authenticated
-			if ([GKLocalPlayer localPlayer].isAuthenticated)
-			{
-				// add the account to the list
-				if (![[GameCenterAccountManager sharedInstance] addAccount:self.appleID password:self.password])
-				{
-					UIAlertView *alert = [[UIAlertView alloc]
-						initWithTitle:@"Failed"
-						message:[NSString stringWithFormat:@"Failed while adding account to keychain!"]
-						delegate:nil
-						cancelButtonTitle:@"OK"
-						otherButtonTitles:nil];
-					[alert show];
-				}
-
-				// clear fields
-				self.appleID = @"";
-				self.password = @"";
-
-				// reload specifiers
-				[self reloadSpecifiers];				
-			}
-			else
-			{
-				UIAlertView *alert = [[UIAlertView alloc]
-					initWithTitle:@"Unkown Error"
-					message:@"Unkown error occurred: use not authenticated."
-					delegate:nil
-					cancelButtonTitle:@"OK"
-					otherButtonTitles:nil];
-				[alert show];
-			}
+			title = @"Unable to Connect";
+			message = @"Unable to connect to server.";
 		}
-	}];
+
+		UIAlertController *alert = [UIAlertController
+							alertControllerWithTitle:title
+																message:message
+												preferredStyle:UIAlertControllerStyleAlert];
+		[alert addAction: [UIAlertAction
+												actionWithTitle:@"OK"
+																	style:UIAlertActionStyleCancel
+																handler:nil]];
+		[self presentViewController:alert animated:YES completion:nil];
+	} else {
+		// see if they successfully authenticated
+		if ([GKLocalPlayer localPlayer].isAuthenticated) {
+			// add the account to the list
+			if (![[GameCenterAccountManager sharedInstance] addAccount:self.appleID password:self.password]) {
+				UIAlertController *alert = [UIAlertController
+							alertControllerWithTitle:@"Failed"
+																message:@"Failed while adding account to keychain!"
+												preferredStyle:UIAlertControllerStyleAlert];
+				[alert addAction: [UIAlertAction
+														actionWithTitle:@"OK"
+																			style:UIAlertActionStyleCancel
+																		handler:nil]];
+				[self presentViewController:alert animated:YES completion:nil];
+			}
+
+			// clear fields
+			self.appleID = @"";
+			self.password = @"";
+
+			// reload specifiers
+			[self reloadSpecifiers];				
+		}
+		else
+		{
+			UIAlertController *alert = [UIAlertController
+							alertControllerWithTitle:@"Unkown Error"
+																message:@"Unkown error occurred: use not authenticated."
+												preferredStyle:UIAlertControllerStyleAlert];
+			[alert addAction: [UIAlertAction
+													actionWithTitle:@"OK"
+																		style:UIAlertActionStyleCancel
+																	handler:nil]];
+			[self presentViewController:alert animated:YES completion:nil];
+		}
+	}
 }
 
 - (PSSpecifier *)addAccountButtonSpecifier
@@ -248,7 +261,7 @@
 	// setup properties
 	[specifier setProperty:APPLE_ID_SPECIFIER_IDENTIFIER forKey:PSKeyNameKey];
 	specifier.identifier = APPLE_ID_SPECIFIER_IDENTIFIER;
-	[specifier setKeyboardType:UIKeyboardTypeEmailAddress autoCaps:NO autoCorrection:UITextAutocorrectionTypeDefault];
+	//[specifier setKeyboardType:UIKeyboardTypeEmailAddress autoCaps:NO autoCorrection:UITextAutocorrectionTypeDefault];
 
 	// set placeholder text
 	[specifier setPlaceholder:@"name@example.com"];
@@ -267,7 +280,7 @@
 	[specifier setProperty:PASSWORD_SPECIFIER_IDENTIFIER forKey:PSKeyNameKey];
 	specifier.buttonAction = @selector(addAccountButtonTapped:);
 	specifier.identifier = PASSWORD_SPECIFIER_IDENTIFIER;
-	[specifier setKeyboardType:UIKeyboardTypeDefault autoCaps:NO autoCorrection:UITextAutocorrectionTypeDefault];
+	//[specifier setKeyboardType:UIKeyboardTypeDefault autoCaps:NO autoCorrection:UITextAutocorrectionTypeDefault];
 
 	// set placeholder text
 	[specifier setPlaceholder:@"Required"];

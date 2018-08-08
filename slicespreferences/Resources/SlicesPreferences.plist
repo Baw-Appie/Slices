@@ -18,13 +18,13 @@
 			<key>default</key>
 			<true />
 			<key>defaults</key>
-			<string>com.expetelek.slicespreferences</string>
+			<string>com.subdiox.slicespreferences</string>
 			<key>key</key>
 			<string>isEnabled</string>
 			<key>label</key>
 			<string>Enabled</string>
 			<key>PostNotification</key>
-			<string>com.expetelek.slicespreferences/settingsChanged</string>
+			<string>com.subdiox.slicespreferences/settingsChanged</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -64,13 +64,13 @@
 			<key>default</key>
 			<true />
 			<key>defaults</key>
-			<string>com.expetelek.slicespreferences</string>
+			<string>com.subdiox.slicespreferences</string>
 			<key>key</key>
 			<string>showNewSliceOption</string>
 			<key>label</key>
 			<string>Show New Slice Option</string>
 			<key>PostNotification</key>
-			<string>com.expetelek.slicespreferences/settingsChanged</string>
+			<string>com.subdiox.slicespreferences/settingsChanged</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -78,7 +78,7 @@
 			<key>label</key>
 			<string>Links</string>
 			<key>footerText</key>
-			<string>If you have any questions or experience any problems, contact hetelek using Twitter or email (through Cydia).</string>
+			<string>If you have any questions or experience any problems, contact subdiox using Twitter or email (through Cydia).</string>
 		</dict>
 		<dict>
 			<key>icon</key>
@@ -86,12 +86,12 @@
 			<key>cell</key>
 			<string>PSButtonCell</string>
 			<key>label</key>
-			<string>@hetelek</string>
+			<string>@subdiox</string>
 			<key>action</key>
 			<string>openTwitter:</string>
 		</dict>
 	</array>
 	<key>title</key>
-	<string>Slices</string>
+	<string>Slices 2</string>
 </dict>
 </plist>

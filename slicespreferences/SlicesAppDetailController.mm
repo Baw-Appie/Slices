@@ -1,6 +1,6 @@
 #import "SlicesAppDetailController.h"
 
-extern NSString* PSDeletionActionKey;
+extern NSString* const PSDeletionActionKey;
 
 @interface UIPreferencesTable
 - (void)reloadData;
@@ -38,6 +38,7 @@ extern NSString* PSDeletionActionKey;
 	{
 		NSString *displayIdentifier = self.specifier.properties[@"displayIdentifier"];
 		_slicer = [[Slicer alloc] initWithDisplayIdentifier:displayIdentifier];
+		NSLog(@"Slices: _slicer=%@", _slicer);
 	}
 
 	// create a temporary specifiers array (mutable)
@@ -85,20 +86,17 @@ extern NSString* PSDeletionActionKey;
 
 	// create slice button specifier
 	PSSpecifier *createSliceSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Create Slice" target:self set:nil get:nil detail:nil cell:PSButtonCell edit:nil];
-	createSliceSpecifier->action = @selector(createSlice:);
+	[createSliceSpecifier setButtonAction:@selector(createSlice:)];
 	[specifiers addObject:createSliceSpecifier];
 
-	if (([[[UIDevice currentDevice] systemVersion] compare:@"8.0" options:NSNumericSearch] != NSOrderedAscending))
-	{
-		// advanced group specifier
-		PSSpecifier *advancedGroupSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Advanced" target:self set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
-		[advancedGroupSpecifier.properties setValue:@"Disabling will leave data shared with other applications untouched." forKey:@"footerText"];
-		[specifiers addObject:advancedGroupSpecifier];
+	// advanced group specifier
+	PSSpecifier *advancedGroupSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Advanced" target:self set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
+	[advancedGroupSpecifier.properties setValue:@"Disabling will leave data shared with other applications untouched." forKey:@"footerText"];
+	[specifiers addObject:advancedGroupSpecifier];
 
-		// app-sharing switch specifier
-		PSSpecifier *appSharingSwitchSpecifier = [PSSpecifier preferenceSpecifierNamed:@"App Sharing" target:self set:@selector(setAppSharing:forSpecifier:) get:@selector(getAppSharing:) detail:nil cell:PSSwitchCell edit:nil];
-		[specifiers addObject:appSharingSwitchSpecifier];
-	}
+	// app-sharing switch specifier
+	PSSpecifier *appSharingSwitchSpecifier = [PSSpecifier preferenceSpecifierNamed:@"App Sharing" target:self set:@selector(setAppSharing:forSpecifier:) get:@selector(getAppSharing:) detail:nil cell:PSSwitchCell edit:nil];
+	[specifiers addObject:appSharingSwitchSpecifier];
 
 	// localize all the strings
 	NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"];
@@ -119,69 +117,71 @@ extern NSString* PSDeletionActionKey;
 
 - (void)createSlice:(PSSpecifier *)specifier
 {
-	UIAlertView *alert = [[UIAlertView alloc]
-			initWithTitle:Localize(@"New Slice")
-			message:Localize(@"Enter the slice name")
-			delegate:self
-			cancelButtonTitle:Localize(@"Cancel")
-			otherButtonTitles:Localize(@"Create Slice"), nil];
-	alert.alertViewStyle = UIAlertViewStylePlainTextInput;
-	[alert show];
+	UIAlertController *alert = [UIAlertController
+							alertControllerWithTitle:Localize(@"New Slice")
+															message:Localize(@"Enter the slice name")
+												preferredStyle:UIAlertControllerStyleAlert];
+	[alert addAction: [UIAlertAction
+											actionWithTitle:Localize(@"Cancel")
+																style:UIAlertActionStyleCancel
+															handler:nil]];
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+			textField.text = specifier.name;
+	}];
+	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Create Slice") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+		// they want to create a slice
+
+		// get the entered slice name
+		NSString *sliceName = alert.textFields[0].text;
+
+		NSLog(@"Slices: _slicer = %@", _slicer);
+
+		// create the slice
+		BOOL created = [_slicer createSlice:sliceName];
+
+		// if no errors occurred, emulate the tap
+		if (created) {
+			NSLog(@"Slices: slice created!");
+			// successfully created
+			// maybe do stuff in the future here
+		} else {
+			NSLog(@"Slices: slice creation failed");
+		}
+		
+		[self refreshView:YES];
+
+		_specifierToRename = nil;
+	}]];
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)renameSlice:(PSSpecifier *)specifier
 {
 	_specifierToRename = specifier;
 
-	UIAlertView *alert = [[UIAlertView alloc]
-			initWithTitle:Localize(@"Rename Slice")
-			message:Localize(@"Enter the new slice name")
-			delegate:self
-			cancelButtonTitle:Localize(@"Cancel")
-			otherButtonTitles:Localize(@"Rename Slice"), nil];
-	alert.alertViewStyle = UIAlertViewStylePlainTextInput;
-	
-	UITextField *textField = [alert textFieldAtIndex:0]; 
-	textField.text = specifier.name;
-
-	[alert show];
-}
-
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-	if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:Localize(@"Create Slice")])
-	{
-		// they want to create a slice
-
-		// get the entered slice name
-		UITextField *textField = [alertView textFieldAtIndex:0];
-		NSString *sliceName = textField.text;
-
-		// create the slice
-		BOOL created = [_slicer createSlice:sliceName];
-
-		// if no errors occurred, emulate the tap
-		if (created)
-		{
-			// successfully created
-			// maybe do stuff in the future here
-		}
-		
-		[self refreshView:YES];
-	}
-	else if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:Localize(@"Rename Slice")])
-	{
+	UIAlertController *alert = [UIAlertController
+							alertControllerWithTitle:Localize(@"Rename Slice")
+															message:Localize(@"Enter the new slice name")
+												preferredStyle:UIAlertControllerStyleAlert];
+	[alert addAction: [UIAlertAction
+											actionWithTitle:Localize(@"Cancel")
+																style:UIAlertActionStyleCancel
+															handler:nil]];
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+			textField.text = specifier.name;
+	}];
+	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Rename Slice") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 		// they want to rename a slice
 		NSString *originalSliceName = _specifierToRename.name;
 
-		UITextField *textField = [alertView textFieldAtIndex:0];
-		NSString *targetSliceName = textField.text;
+		NSString *targetSliceName = alert.textFields[0].text;
 
 		[_slicer renameSlice:originalSliceName toName:targetSliceName];
 		[self refreshView:YES];
-	}
 
-	_specifierToRename = nil;
+		_specifierToRename = nil;
+	}]];
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)setDefaultSlice:(NSString *)sliceName forSpecifier:(PSSpecifier*)specifier
@@ -218,7 +218,7 @@ extern NSString* PSDeletionActionKey;
 	return [NSNumber numberWithBool:_slicer.appSharing];
 }
 
-- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
+- (long long)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	return UITableViewCellEditingStyleDelete;
 }
@@ -246,10 +246,12 @@ extern NSString* PSDeletionActionKey;
 
 - (void)refreshView:(BOOL)forceHardReload
 {
+	NSLog(@"Slices: refreshView");
 	[_defaultSpecifier loadValuesAndTitlesFromDataSource];
 
-	if (forceHardReload || _slicer.slices.count < 1)
+	if (forceHardReload || _slicer.slices.count < 1) {
 		[self reloadSpecifiers];
+	}
 
 	[[self table] reloadData];
 	[self reload];

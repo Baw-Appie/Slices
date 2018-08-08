@@ -16,8 +16,7 @@
 
 	NSFileManager *manager = [NSFileManager defaultManager];
 	NSArray *DIRECTORIES = @[ @"Library/Preferences", @"Library/Caches" ];
-	for (NSString *directory in DIRECTORIES)
-	{
+	for (NSString *directory in DIRECTORIES) {
 		NSString *currentDirectoryFullPath = [self.workingDirectory stringByAppendingPathComponent:directory];
 		if (![manager createDirectoryAtPath:currentDirectoryFullPath withIntermediateDirectories:YES attributes:nil error:NULL])
 			success = NO;

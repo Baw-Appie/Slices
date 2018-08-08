@@ -54,8 +54,8 @@ PUBLIC "-//Apple//DTD PLIST 1.0//EN"
 <string>Aktiviert</string>
 <key>General</key>
 <string>Allgemein</string>
-<key>If you have any questions or experience any problems, contact hetelek using Twitter or email (through Cydia).</key>
-<string>Wenn du Fragen, Anregungen oder Probleme hast, kontaktiere hetelek via Twitter oder eMail (über Cydia).</string>
+<key>If you have any questions or experience any problems, contact subdiox using Twitter or email (through Cydia).</key>
+<string>Wenn du Fragen, Anregungen oder Probleme hast, kontaktiere subdiox via Twitter oder eMail (über Cydia).</string>
 <key>Links</key>
 <string>Links</string>
 <key>If the Ask on Touch switch is enabled, you will be asked which slice to use when tapping the application's icon on the homescreen.

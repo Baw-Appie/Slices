@@ -1,73 +1,68 @@
 #import "Slicer.h"
+#import "../Headers/SpringBoardHeaders.h"
 
 @interface Slicer ()
 @property (readwrite) NSString *displayIdentifier;
 
-@property (assign) BOOL iOS8;
 @property (assign) BOOL ignoreNextKill;
 
+@property SBApplicationController *applicationController;
 @property SBApplication *application;
 @end
 
 extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSString *app, int a, int b, NSString *description);
 
 @implementation Slicer
-- (instancetype)initWithApplication:(SBApplication *)application
+- (instancetype)initWithApplication:(SBApplication *)application controller:(SBApplicationController *)applicationController
 {
 	self = [super init];
 
-	self.iOS8 = ([[[UIDevice currentDevice] systemVersion] compare:@"8.0" options:NSNumericSearch] != NSOrderedAscending);
-
 	self.application = application;
+	self.applicationController = applicationController;
 	self.displayIdentifier = application.displayIdentifier;
 
+	NSLog(@"Slices: application=%@, applicationController=%@, displayIdentifier=%@", self.application, self.applicationController, self.displayIdentifier);
+
 	// get application directory
-	if ([application respondsToSelector:@selector(dataContainerPath)])
+	if ([application respondsToSelector:@selector(dataContainerPath)]) {
 		self.workingDirectory = [application dataContainerPath];
-	else
-	{
-		ALApplicationList *applicationList = [ALApplicationList sharedApplicationList];
-		self.workingDirectory = [[applicationList valueForKey:@"path" forDisplayIdentifier:self.displayIdentifier] stringByDeletingLastPathComponent];
+	} else {
+		self.workingDirectory = [application info].dataContainerURL.path;
 	}
+
+  NSLog(@"Slices: workingDirectory=%@", self.workingDirectory);
 
 	if (!self.workingDirectory)
 		return nil;
 
 	// get slices directory
-	if (self.iOS8)
-		self.slicesDirectory = [SLICES_DIRECTORY stringByAppendingPathComponent:self.displayIdentifier];
-	else
-		self.slicesDirectory = [self.workingDirectory stringByAppendingPathComponent:@"Slices"];
+	self.slicesDirectory = [SLICES_DIRECTORY stringByAppendingPathComponent:self.displayIdentifier];
 
 	return self;
 }
 
-- (instancetype)initWithDisplayIdentifier:(NSString *)displayIdentifier
-{
-	self = [super init];
+- (instancetype)initWithDisplayIdentifier:(NSString *)displayIdentifier {
+  self = [super init];
+  self.application = nil;
+  self.displayIdentifier = displayIdentifier;
 
-	self.iOS8 = ([[[UIDevice currentDevice] systemVersion] compare:@"8.0" options:NSNumericSearch] != NSOrderedAscending);
+  // get application directory
+  ALApplicationList *applicationList = [ALApplicationList sharedApplicationList];
+  self.workingDirectory = [applicationList valueForKey:@"dataContainerPath" forDisplayIdentifier:displayIdentifier];
+	
+	if (!self.workingDirectory) {
+		FBApplicationInfo *appInfo = [objc_getClass("LSApplicationProxy") applicationProxyForIdentifier: displayIdentifier];
+		self.workingDirectory = appInfo.dataContainerURL.path;
+	}
 
-	self.application = nil;
-	self.displayIdentifier = displayIdentifier;
+  if (!self.workingDirectory) {
+		NSLog(@"[Slices] Error: working directory cannot be found");
+    return nil;
+	}
 
-	// get application directory
-	ALApplicationList *applicationList = [ALApplicationList sharedApplicationList];
-	if (self.iOS8)
-		self.workingDirectory = [applicationList valueForKey:@"dataContainerPath" forDisplayIdentifier:displayIdentifier];
-	else
-		self.workingDirectory = [[applicationList valueForKey:@"path" forDisplayIdentifier:displayIdentifier] stringByDeletingLastPathComponent];
-
-	if (!self.workingDirectory)
-		return nil;
-
-	// get slices directory
-	if (self.iOS8)
-		self.slicesDirectory = [SLICES_DIRECTORY stringByAppendingPathComponent:displayIdentifier];
-	else
-		self.slicesDirectory = [self.workingDirectory stringByAppendingPathComponent:@"Slices"];
-
-	return self;
+  // get slices directory
+  self.slicesDirectory = [SLICES_DIRECTORY stringByAppendingPathComponent:displayIdentifier];
+  return self;
 }
 
 - (NSArray *)appGroupSlicers
@@ -79,7 +74,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	if (LSApplicationProxyClass && [LSApplicationProxyClass instancesRespondToSelector:@selector(groupContainers)])
 	{
 		NSString *mainSliceDirectory = [self.slicesDirectory stringByDeletingLastPathComponent];
-		NSDictionary *appGroupContainers = [LSApplicationProxyClass applicationProxyForIdentifier:self.displayIdentifier].groupContainers;
+		NSDictionary *appGroupContainers = [[LSApplicationProxyClass applicationProxyForIdentifier:self.displayIdentifier] groupContainers];
 
 		NSMutableArray *appGroupSlicers = [[NSMutableArray alloc] init];
 		for (NSString *groupIdentifier in [appGroupContainers allKeys])
@@ -179,11 +174,8 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, @"Killed from Slices");
 
 	// must kill this in iOS 8
-	if (self.iOS8)
-	{
-		char * const argv[4] = {(char *const)"launchctl", (char *const)"stop", (char *const)"com.apple.cfprefsd.xpc.daemon", NULL};
-		NSLog(@"launchctl call: %i", posix_spawnp(NULL, (char *const)"launchctl", NULL, NULL, argv, NULL));
-	}
+	char * const argv[4] = {(char *const)"launchctl", (char *const)"stop", (char *const)"com.apple.cfprefsd.xpc.daemon", NULL};
+	NSLog(@"launchctl call: %i", posix_spawnp(NULL, (char *const)"launchctl", NULL, NULL, argv, NULL));
 
 	[NSThread sleepForTimeInterval:0.1];
 }
@@ -193,55 +185,63 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	if (targetSliceName.length > 0 && ![self.currentSlice isEqualToString:targetSliceName])
 		[self killApplication];
 
-	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist" ];
+	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist"];
 	BOOL success = [super switchToSlice:targetSliceName ignoreSuffixes:IGNORE_SUFFIXES];
 	if (!success)
 	{
+		NSLog(@"Slices: switchToSlice failed");
 		if (completionHandler)
 			completionHandler(NO);
 		return;
 	}
 
 	NSArray *appGroupSlicers = [self appGroupSlicers];
-	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers)
-		if (![appGroupSlicer switchToSlice:targetSliceName])
+	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
+		if (![appGroupSlicer switchToSlice:targetSliceName]) {
 			success = NO;
+		}
+	}
 
 	NSString *gameCenterAccount = [self gameCenterAccountForSlice:targetSliceName];
 	GameCenterAccountManager *gameCenterAccountManager = [GameCenterAccountManager sharedInstance];
 	[gameCenterAccountManager switchToAccount:gameCenterAccount completionHandler:^(BOOL gameCenterSuccess) {
-		if (completionHandler)
+		if (completionHandler) {
 			completionHandler(success && gameCenterSuccess);
+		}
 	}];
 }
 
-- (BOOL)createSlice:(NSString *)newSliceName
-{
-	if (self.currentSlice.length > 0)
+- (BOOL)createSlice:(NSString *)newSliceName {
+	if (self.currentSlice.length > 0) {
 		[self killApplication];
+	}
 
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist" ];
 	BOOL success = [super createSlice:newSliceName ignoreSuffixes:IGNORE_SUFFIXES];
-	if (!success)
+	if (!success) {
 		return NO;
+	}
 
 	NSFileManager *manager = [NSFileManager defaultManager];
 	NSArray *DIRECTORIES = @[ @"tmp", @"Documents", @"StoreKit", @"Library" ];
-	for (NSString *directory in DIRECTORIES)
-	{
+	for (NSString *directory in DIRECTORIES) {
 		NSString *currentDirectoryFullPath = [self.workingDirectory stringByAppendingPathComponent:directory];
-		if (![manager createDirectoryAtPath:currentDirectoryFullPath withIntermediateDirectories:YES attributes:nil error:NULL])
+		if (![manager createDirectoryAtPath:currentDirectoryFullPath withIntermediateDirectories:YES attributes:nil error:NULL]) {
 			success = NO;
+		}
 	}
 
 	NSArray *appGroupSlicers = [self appGroupSlicers];
-	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers)
-		if (![appGroupSlicer createSlice:newSliceName])
+	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
+		if (![appGroupSlicer createSlice:newSliceName]) {
 			success = NO;
+		}
+	}
 
 	// update default slice
-	if (self.defaultSlice.length < 1)
+	if (self.defaultSlice.length < 1) {
 		self.defaultSlice = newSliceName;
+	}
 
 	return success;
 }
@@ -253,62 +253,65 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist" ];
 	BOOL success = [super deleteSlice:sliceName ignoreSuffixes:IGNORE_SUFFIXES];
-	if (!success)
+	if (!success) {
 		return NO;
+	}
 
 	NSArray *appGroupSlicers = [self appGroupSlicers];
-	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers)
-		if (![appGroupSlicer deleteSlice:sliceName])
+	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
+		if (![appGroupSlicer deleteSlice:sliceName]) {
 			success = NO;
+		}
+	}
 
 	NSArray *slices = self.slices;
 	NSString *defaultSlice = self.defaultSlice;
 	
 	// update default slice
-	if ([defaultSlice isEqualToString:sliceName])
-	{
-		if (slices.count > 0)
-		{
+	if ([defaultSlice isEqualToString:sliceName]) {
+		if (slices.count > 0) {
 			self.defaultSlice = slices[0];
 			defaultSlice = slices[0];
-		}
-		else
-		{
+		} else {
 			self.defaultSlice = nil;
 			defaultSlice = nil;
 		}
 	}
 
 	// update current slice
-	if ([self.currentSlice isEqualToString:sliceName])
-	{
+	if ([self.currentSlice isEqualToString:sliceName]) {
 		self.currentSlice = nil;
 		self.ignoreNextKill = YES;
 
-		if (defaultSlice.length > 0)
+		if (defaultSlice.length > 0) {
 			[self switchToSlice:defaultSlice completionHandler:nil];
-		else
+		} else {
 			[self switchToSlice:slices[0] completionHandler:nil];
+		}
 	}
 
 	self.ignoreNextKill = NO;
 	return success;
 }
 
-- (BOOL)renameSlice:(NSString *)originaSliceName toName:(NSString *)targetSliceName
-{
+- (BOOL)renameSlice:(NSString *)originaSliceName toName:(NSString *)targetSliceName {
 	BOOL success = [super renameSlice:originaSliceName toName:targetSliceName];
-	if (!success)
+	if (!success) {
 		return NO;
+	}
 
 	NSArray *appGroupSlicers = [self appGroupSlicers];
-	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers)
-		if (![appGroupSlicer renameSlice:originaSliceName toName:targetSliceName])
+	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
+		if (![appGroupSlicer renameSlice:originaSliceName toName:targetSliceName]) {
 			success = NO;
+		}
+	}
 
-	if ([self.defaultSlice isEqualToString:originaSliceName])
+	if ([self.defaultSlice isEqualToString:originaSliceName]) {
 		self.defaultSlice = targetSliceName;
+	}
 
 	return success;
 }
+
 @end

@@ -41,25 +41,56 @@
 
 - (void)switchToAccount:(NSString *)username completionHandler:(void (^)(BOOL))completionHandler
 {
-	// get account proxy
-	Class GKDaemonProxyClass = objc_getClass("GKDaemonProxy");
-	id<GKAccountServicePrivate> accountServicePrivateProxy = [GKDaemonProxyClass accountServicePrivateProxy];
-
-	// get corresponding password
-	NSString *password = [SSKeychain passwordForService:GAME_CENTER_ACCOUNT_SERVICE account:username];
-
-	// sign out current player, then try and sign in
-	[accountServicePrivateProxy signOutPlayerWithHandler:^(NSError *error) {
-		[accountServicePrivateProxy authenticatePlayerWithUsername:username password:password usingFastPath:true handler:^(GKAuthenticateResponse *response, NSError *error) {
-				if (error == nil && [GKLocalPlayer localPlayer].isAuthenticated)
-				{
-					// authenticated player
-					if (completionHandler)
-						completionHandler(YES);
-				}
-				else if (completionHandler)
-					completionHandler(NO);
+	if (username) {
+		// get corresponding password
+		NSString *password = [SSKeychain passwordForService:GAME_CENTER_ACCOUNT_SERVICE account:username];
+		if ([objc_getClass("GKDaemonProxy") respondsToSelector:@selector(accountServicePrivateProxy)]) {
+			// get account proxy
+			id<GKAccountServicePrivate> accountServicePrivateProxy = [objc_getClass("GKDaemonProxy") accountServicePrivateProxy];
+			// sign out current player, then try and sign in
+			[accountServicePrivateProxy signOutPlayerWithHandler:^(NSError *error) {
+				[accountServicePrivateProxy authenticatePlayerWithUsername:username password:password usingFastPath:true handler:^(GKAuthenticateResponse *response, NSError *error) {
+					if (error == nil && [GKLocalPlayer localPlayer].isAuthenticated) {
+						// authenticated player
+						if (completionHandler) {
+							completionHandler(YES);
+						}
+					} else if (completionHandler) {
+						completionHandler(NO);
+					}
+				}];
 			}];
-	}];
+		} else {
+			// get account proxy
+			id<GKAccountServicePrivate> accountServicePrivateProxy = [[objc_getClass("GKDaemonProxy") proxyForPlayer:nil] accountServicePrivate];
+			// sign out current player, then try and sign in
+			[accountServicePrivateProxy signOutPlayerWithHandler:^(NSError *error) {
+				[accountServicePrivateProxy authenticatePlayerWithUsername:username password:password handler:^(GKAuthenticateResponse *response, NSError *error) {
+					if (error == nil && [GKLocalPlayer localPlayer].isAuthenticated) {
+						// authenticated player
+						if (completionHandler) {
+							completionHandler(YES);
+						}
+					} else if (completionHandler) {
+						completionHandler(NO);
+					}
+				}];
+			}];
+		}
+	} else {
+		// get account proxy
+		id<GKAccountServicePrivate> accountServicePrivateProxy = [[objc_getClass("GKDaemonProxy") proxyForPlayer:nil] accountServicePrivate];
+		// sign out current player
+		[accountServicePrivateProxy signOutPlayerWithHandler:^(NSError *error) {
+			if (error == nil) {
+				// authenticated player
+				if (completionHandler) {
+					completionHandler(YES);
+				}
+			} else if (completionHandler) {
+				completionHandler(NO);
+			}
+		}];
+	}
 }
 @end

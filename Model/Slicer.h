@@ -16,8 +16,6 @@
 @property (readonly) SBApplication *application;
 
 - (void)killApplication;
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex;
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex;
 @end
 
 @interface Slicer : RawSlicer
@@ -27,7 +25,7 @@
 @property (nonatomic) BOOL appSharing;
 
 - (instancetype)initWithDisplayIdentifier:(NSString *)displayIdentifier;
-- (instancetype)initWithApplication:(SBApplication *)application;
+- (instancetype)initWithApplication:(SBApplication *)application controller:(SBApplicationController *)applicationController;
 
 - (NSString *)gameCenterAccountForSlice:(NSString *)sliceName;
 - (void)setGameCenterAccount:(NSString *)gameCenterAccount forSlice:(NSString *)sliceName;

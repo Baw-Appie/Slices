@@ -109,7 +109,7 @@
 	// setup properties
 	[specifier setProperty:NAME_SPECIFIER_IDENTIFIER forKey:PSKeyNameKey];
 	specifier.identifier = NAME_SPECIFIER_IDENTIFIER;
-	[specifier setKeyboardType:UIKeyboardTypeASCIICapable autoCaps:NO autoCorrection:UITextAutocorrectionTypeDefault];
+	//[specifier setKeyboardType:UIKeyboardTypeASCIICapable autoCaps:NO autoCorrection:UITextAutocorrectionTypeDefault];
 
 	// set placeholder text
 	[specifier setPlaceholder:@"Name"];

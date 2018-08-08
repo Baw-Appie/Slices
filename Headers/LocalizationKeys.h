@@ -16,9 +16,9 @@
 #define DEFAULT_KEY @"Default"
 #define APPLICATIONS_KEY @"Applications"
 #define DISABLING_KEY @"Disabling will leave all applications set to the last slice they were on."
-#define TWITTER_KEY @"@hetelek"
+#define TWITTER_KEY @"@subdiox"
 #define ENABLED_STRING_KEY @"Enabled"
-#define QUESTIONS_KEY @"If you have any questions or experience any problems, contact hetelek using Twitter or email (through Cydia)."
+#define QUESTIONS_KEY @"If you have any questions or experience any problems, contact subdiox using Twitter or email (through Cydia)."
 #define LINKS_KEY @"Links"
 #define USER_APPLICATIONS @"User Applications"
 

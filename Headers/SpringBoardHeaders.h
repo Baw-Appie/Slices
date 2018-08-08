@@ -10,9 +10,14 @@
 @end
 
 @interface LSApplicationProxy
-@property (nonatomic, readonly) NSDictionary *groupContainers;
++ (id)applicationProxyForIdentifier:(id)identifier;
+- (id)_initWithBundleUnit:(NSUInteger)arg1 applicationIdentifier:(NSString *)arg2;
++ (id)applicationProxyForBundleURL:(NSURL *)arg1;
+- (NSDictionary *)groupContainers;
+@end
 
-+ (LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)identifier;
+@interface SBApplicationInfo: NSObject
+- (NSURL *)dataContainerURL;
 @end
 
 @interface SBApplication : NSObject
@@ -21,15 +26,15 @@
 }
 
 @property (readonly) int pid;
-@property NSString *displayIdentifier; 
+@property NSString *displayIdentifier;
+@property (nonatomic,readonly) SBApplicationInfo * info;
 
-@property NSString *containerPath;
-@property NSString *dataContainerPath;
+-(id)dataContainerPath;
 @end
 
-@interface SBApplicationController
-- (SBApplicationController *)sharedInstance;
-- (SBApplication *)applicationWithBundleIdentifier:(NSString *)bundleIdentifier;
+@interface SBApplicationController : NSObject
++ (id)sharedInstance;
+- (id)applicationWithBundleIdentifier:(id)arg1;
 @end
 
 @interface SBIcon : NSObject
@@ -60,4 +65,12 @@
 @property SBAppWindow *window;
 
 - (SBUIController *)sharedInstance;
+@end
+
+@interface FBApplicationInfo
+@property (nonatomic,retain,readonly) NSURL * dataContainerURL;
+@end
+
+@interface dummy
++(id)_gkKeyWindowRootViewController;
 @end
