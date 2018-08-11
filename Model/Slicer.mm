@@ -13,8 +13,7 @@
 extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSString *app, int a, int b, NSString *description);
 
 @implementation Slicer
-- (instancetype)initWithApplication:(SBApplication *)application controller:(SBApplicationController *)applicationController
-{
+- (instancetype)initWithApplication:(SBApplication *)application controller:(SBApplicationController *)applicationController {
 	self = [super init];
 
 	self.application = application;
@@ -65,8 +64,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
   return self;
 }
 
-- (NSArray *)appGroupSlicers
-{
+- (NSArray *)appGroupSlicers {
 	if (!self.appSharing)
 		return @[ ];
 
@@ -87,25 +85,22 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		}
 
 		return appGroupSlicers;
-	}
-	else
+	} else {
 		return @[ ];
+	}
 }
 
-- (NSString *)defaultSlice
-{
+- (NSString *)defaultSlice {
 	SliceSetting *defaultSliceSetting = [[SliceSetting alloc] initWithPrefix:@"def_"];
 	return [defaultSliceSetting getValueInDirectory:self.slicesDirectory];
 }
 
-- (void)setDefaultSlice:(NSString *)defaultSlice
-{
+- (void)setDefaultSlice:(NSString *)defaultSlice {
 	SliceSetting *defaultSliceSetting = [[SliceSetting alloc] initWithPrefix:@"def_"];
 	[defaultSliceSetting setValueInDirectory:self.slicesDirectory value:defaultSlice];
 }
 
-- (NSString *)gameCenterAccountForSlice:(NSString *)sliceName
-{
+- (NSString *)gameCenterAccountForSlice:(NSString *)sliceName {
 	// yes, slice's slice directory (the slice directory that Slices uses to store the slice)
 	NSString *slicesSliceDirectory = [self.slicesDirectory stringByAppendingPathComponent:sliceName];
 
@@ -113,8 +108,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	return [gameCenterAccountSetting getValueInDirectory:slicesSliceDirectory];
 }
 
-- (void)setGameCenterAccount:(NSString *)gameCenterAccount forSlice:(NSString *)sliceName
-{
+- (void)setGameCenterAccount:(NSString *)gameCenterAccount forSlice:(NSString *)sliceName {
 	// yes, slice's slice directory (the slice directory that Slices uses to store the slice)
 	NSString *slicesSliceDirectory = [self.slicesDirectory stringByAppendingPathComponent:sliceName];
 
@@ -122,73 +116,65 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	[gameCenterAccountSetting setValueInDirectory:slicesSliceDirectory value:gameCenterAccount];
 }
 
-- (void)setAskOnTouch:(BOOL)askOnTouch
-{
+- (void)setAskOnTouch:(BOOL)askOnTouch {
 	SliceSetting *askOnTouchSliceSetting = [[SliceSetting alloc] initWithPrefix:@"e"];
 
 	NSString *stringValue = (askOnTouch) ? @"1" : @"0";
 	[askOnTouchSliceSetting setValueInDirectory:self.slicesDirectory value:stringValue];
 }
 
-- (BOOL)askOnTouch
-{
+- (BOOL)askOnTouch {
 	SliceSetting *askOnTouchSliceSetting = [[SliceSetting alloc] initWithPrefix:@"e"];
 	return [[askOnTouchSliceSetting getValueInDirectory:self.slicesDirectory] isEqualToString:@"1"];
 }
 
-- (void)setAppSharing:(BOOL)appSharing
-{
+- (void)setAppSharing:(BOOL)appSharing {
 	SliceSetting *appSharingSliceSetting = [[SliceSetting alloc] initWithPrefix:@"s_"];
 
 	NSString *stringValue = (appSharing) ? @"1" : @"0";
 	[appSharingSliceSetting setValueInDirectory:self.slicesDirectory value:stringValue];
 }
 
-- (BOOL)appSharing
-{
+- (BOOL)appSharing {
 	SliceSetting *appSharingSliceSetting = [[SliceSetting alloc] initWithPrefix:@"s_"];
 
 	NSString *stringValue = [appSharingSliceSetting getValueInDirectory:self.slicesDirectory];
 	return stringValue == nil || [stringValue isEqualToString:@"1"];
 }
 
-- (void)killApplication
-{
-	if (self.ignoreNextKill)
-	{
+- (void)killApplication {
+	if (self.ignoreNextKill) {
 		self.ignoreNextKill = NO;
 		return;
 	}
 
 	// if FBApplicationProcess has 'stop', use that
 	Class FBApplicationProcessClass = objc_getClass("FBApplicationProcess");
-	if ([FBApplicationProcessClass instancesRespondToSelector:@selector(stop)])
-	{
-		if (self.application)
-		{
+	if ([FBApplicationProcessClass instancesRespondToSelector:@selector(stop)]) {
+		if (self.application) {
 			FBApplicationProcess *process = MSHookIvar<FBApplicationProcess *>(self.application, "_process");
 			[process stop];
 		}
-	}
-	else
+	} else {
 		BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, @"Killed from Slices");
+	}
 
 	// must kill this in iOS 8
-	char * const argv[4] = {(char *const)"launchctl", (char *const)"stop", (char *const)"com.apple.cfprefsd.xpc.daemon", NULL};
-	NSLog(@"launchctl call: %i", posix_spawnp(NULL, (char *const)"launchctl", NULL, NULL, argv, NULL));
+	pid_t pid;
+  const char *args[] = {"sh", "-c", "sudo launchctl stop com.apple.cfprefsd.xpc.daemon", NULL};
+  posix_spawn(&pid, "/bin/sh", NULL, NULL, (char* const*)args, NULL);
 
 	[NSThread sleepForTimeInterval:0.1];
 }
 
-- (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler
-{
-	if (targetSliceName.length > 0 && ![self.currentSlice isEqualToString:targetSliceName])
+- (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler {
+	if (targetSliceName.length > 0 && ![self.currentSlice isEqualToString:targetSliceName]) {
 		[self killApplication];
+	}
 
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist"];
 	BOOL success = [super switchToSlice:targetSliceName ignoreSuffixes:IGNORE_SUFFIXES];
-	if (!success)
-	{
+	if (!success) {
 		NSLog(@"Slices: switchToSlice failed");
 		if (completionHandler)
 			completionHandler(NO);
@@ -246,8 +232,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	return success;
 }
 
-- (BOOL)deleteSlice:(NSString *)sliceName
-{
+- (BOOL)deleteSlice:(NSString *)sliceName {
 	if ([sliceName isEqualToString:self.currentSlice])
 		[self killApplication];
 

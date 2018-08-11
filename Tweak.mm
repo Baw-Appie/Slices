@@ -18,8 +18,9 @@ static NSInteger version;
 	%orig;
 
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.subdiox.slicespreferences.plist"];
-	if (!prefs)
+	if (!prefs) {
 		prefs = [[NSMutableDictionary alloc] init];
+	}
 
 	[prefs setObject:[NSNumber numberWithBool:YES] forKey:@"hasSeenWelcomeMessage"];
 	[prefs writeToFile:@"/var/mobile/Library/Preferences/com.subdiox.slicespreferences.plist" atomically:YES];
@@ -48,7 +49,6 @@ static NSInteger version;
 
 %hook SBIconView
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-	NSLog(@"Slices: SBIconView touchesBegan");
 	if (!isEnabled) {
 		%orig;
 	} else {
@@ -134,20 +134,19 @@ static NSInteger version;
 							BOOL created = [slicer createSlice:sliceName];
 
 							// if no errors occured, emulate the tap
-							if (created)
-							{
+							if (created) {
 								id<SBIconViewDelegate> delegate = MSHookIvar< id<SBIconViewDelegate> >(self, "_delegate");
 								[delegate iconTapped:self];
 							}
 						}]];
-						[((UIViewController *)[objc_getClass("UIViewController") _gkKeyWindowRootViewController]) presentViewController:alert animated:YES completion:nil];
+						[[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
 					}]];
 				}
 				[alert addAction: [UIAlertAction
 														actionWithTitle:Localize(@"Cancel")
 																			style:UIAlertActionStyleCancel
 																		handler:nil]];
-				[((UIViewController *)[objc_getClass("UIViewController") _gkKeyWindowRootViewController]) presentViewController:alert animated:YES completion:nil];
+				[[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
 			} else {
 				[slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
 					%orig;

@@ -31,11 +31,9 @@ extern NSString* const PSDeletionActionKey;
 	[self refreshView:YES];
 }
 
-- (void)reloadSpecifiers
-{
+- (void)reloadSpecifiers {
 	// create a slicer
-	if (!_slicer)
-	{
+	if (!_slicer) {
 		NSString *displayIdentifier = self.specifier.properties[@"displayIdentifier"];
 		_slicer = [[Slicer alloc] initWithDisplayIdentifier:displayIdentifier];
 		NSLog(@"Slices: _slicer=%@", _slicer);
@@ -66,8 +64,7 @@ extern NSString* const PSDeletionActionKey;
 
 	// create the specifiers
 	NSArray *slices = _slicer.slices;
-	for (NSString *slice in slices)
-	{
+	for (NSString *slice in slices) {
 		PSSpecifier *specifier = [PSSpecifier preferenceSpecifierNamed:slice target:self set:nil get:nil detail:[SliceDetailController class] cell:PSLinkListCell edit:nil];
 		//specifier->action = @selector(renameSlice:);
 		[specifier setProperty:NSStringFromSelector(@selector(removedSpecifier:)) forKey:PSDeletionActionKey];
@@ -76,13 +73,12 @@ extern NSString* const PSDeletionActionKey;
 	}
 
 	// if there aren't any slices, tell them
-	if (slices.count < 1)
-	{
+	if (slices.count < 1) {
 		[specifiers addObject:[PSSpecifier preferenceSpecifierNamed:@"No Slices" target:self set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
 		[self setEditingButtonHidden:YES animated:NO];
-	}
-	else
+	} else {
 		[self setEditingButtonHidden:NO animated:YES];
+	}
 
 	// create slice button specifier
 	PSSpecifier *createSliceSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Create Slice" target:self set:nil get:nil detail:nil cell:PSButtonCell edit:nil];
@@ -100,23 +96,23 @@ extern NSString* const PSDeletionActionKey;
 
 	// localize all the strings
 	NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"];
-	for (PSSpecifier *specifier in specifiers)
-	{
+	for (PSSpecifier *specifier in specifiers) {
 		NSString *footerTextValue = [specifier propertyForKey:@"footerText"];
-		if (footerTextValue)
+		if (footerTextValue) {
 			[specifier setProperty:Localize(footerTextValue) forKey:@"footerText"];
+		}
 
 		NSString *name = specifier.name; // "label" key in plist
-		if (name)
+		if (name) {
 			specifier.name = Localize(name);
+		}
 	}
 
 	// update the specifier ivar (immutable)
 	_specifiers = [specifiers copy];
 }
 
-- (void)createSlice:(PSSpecifier *)specifier
-{
+- (void)createSlice:(PSSpecifier *)specifier {
 	UIAlertController *alert = [UIAlertController
 							alertControllerWithTitle:Localize(@"New Slice")
 															message:Localize(@"Enter the slice name")
@@ -126,7 +122,7 @@ extern NSString* const PSDeletionActionKey;
 																style:UIAlertActionStyleCancel
 															handler:nil]];
 	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-			textField.text = specifier.name;
+			textField.text = @"New Slice";
 	}];
 	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Create Slice") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 		// they want to create a slice

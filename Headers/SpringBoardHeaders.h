@@ -70,7 +70,3 @@
 @interface FBApplicationInfo
 @property (nonatomic,retain,readonly) NSURL * dataContainerURL;
 @end
-
-@interface dummy
-+(id)_gkKeyWindowRootViewController;
-@end
