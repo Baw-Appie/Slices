@@ -20,7 +20,7 @@
 
 @interface Slicer : RawSlicer
 @property (readonly) NSString *displayIdentifier;
-@property (nonatomic) NSString *defaultSlice;
+@property (nonatomic, strong) NSString *defaultSlice;
 @property (nonatomic) BOOL askOnTouch;
 @property (nonatomic) BOOL appSharing;
 

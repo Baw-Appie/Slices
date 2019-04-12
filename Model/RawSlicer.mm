@@ -3,6 +3,7 @@
 @implementation RawSlicer : NSObject
 - (instancetype)initWithWorkingDirectory:(NSString *)workingDirectory slicesDirectory:(NSString *)slicesDirectory
 {
+	HBLogDebug(@"initWithWorkingDirectory");
 	self = [super init];
 
 	self.workingDirectory = workingDirectory;
@@ -40,7 +41,7 @@
 - (void)setCurrentSlice:(NSString *)sliceName
 {
 	SliceSetting *currentSliceSetting = [[SliceSetting alloc] initWithPrefix:@"cur_"];
-	[currentSliceSetting setValueInDirectory:self.slicesDirectory value:sliceName];	
+	[currentSliceSetting setValueInDirectory:self.slicesDirectory value:sliceName];
 }
 
 - (BOOL)cleanupMainDirectoryWithTargetSlicePath:(NSString *)cleanupSlicePath ignoreSuffixes:(NSArray *)ignoreSuffixes
@@ -74,6 +75,7 @@
 
 	// see if we're already on the slice
 	NSString *currentSlice = self.currentSlice;
+	HBLogDebug(@"Super switchToSlice %@, %@", currentSlice, targetSliceName);
 	if ([currentSlice isEqualToString:targetSliceName])
 		return YES;
 
@@ -83,9 +85,10 @@
 		NSString *currentSlicePath = [self.slicesDirectory stringByAppendingPathComponent:currentSlice];
 		[self cleanupMainDirectoryWithTargetSlicePath:currentSlicePath ignoreSuffixes:ignoreSuffixes];
 	}
-	
+
 	// migrate new slice data into app directory
 	NSString *targetSlicePath = [self.slicesDirectory stringByAppendingPathComponent:targetSliceName];
+	HBLogDebug(@"self.slicesDirectory %@", self.slicesDirectory);
 	FolderMigrator *migrator = [[FolderMigrator alloc] initWithSourcePath:targetSlicePath destinationPath:self.workingDirectory];
 	migrator.ignorePrefixes = @[ @"gc_" ];
 	BOOL success = [migrator executeMigration];
@@ -112,18 +115,18 @@
 
 	// create directory
 	[manager createDirectoryAtPath:newSlicePath withIntermediateDirectories:YES attributes:nil error:NULL];
-	
+
 	NSString *currentSlice = self.currentSlice;
 	if (currentSlice.length < 1)
 	{
 		self.currentSlice = newSliceName;
 		return YES;
 	}
-	
+
 	// cleanup current slice
 	NSString *currentSlicePath = [self.slicesDirectory stringByAppendingPathComponent:currentSlice];
 	[self cleanupMainDirectoryWithTargetSlicePath:currentSlicePath ignoreSuffixes:ignoreSuffixes];
-	
+
 	// update current slice
 	self.currentSlice = newSliceName;
 
@@ -140,12 +143,12 @@
 	NSString *currentSlice = self.currentSlice;
 	if ([sliceName isEqualToString:currentSlice])
 		[self cleanupMainDirectoryWithTargetSlicePath:nil ignoreSuffixes:ignoreSuffixes];
-	
+
 	// remove slice directory
 	NSString *slicePath = [self.slicesDirectory stringByAppendingPathComponent:sliceName];
 	if (![[NSFileManager defaultManager] removeItemAtPath:slicePath error:NULL])
 		return NO;
-	
+
 	NSArray *slices = self.slices;
 
 	// update current slice
@@ -171,11 +174,11 @@
 	NSFileManager *manager = [NSFileManager defaultManager];
 	if (![manager moveItemAtPath:originalSlicePath toPath:targetSlicePath error:NULL])
 		return NO;
-	
+
 	// update current/default slice
 	if ([self.currentSlice isEqualToString:originaSliceName])
 		self.currentSlice = targetSliceName;
-	
+
 	return YES;
 }
 @end

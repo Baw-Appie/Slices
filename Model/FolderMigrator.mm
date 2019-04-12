@@ -48,14 +48,23 @@
 
 + (BOOL)migrateDirectory:(NSString *)sourceDirectory toDirectory:(NSString *)destinationDirectory ignorePrefixes:(NSArray *)ignorePrefixes ignoreSuffixes:(NSArray *)ignoreSuffixes
 {
-	NSFileManager *manager = [NSFileManager defaultManager];
-	NSArray *filesToMigrate = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:sourceDirectory error:NULL];
-
+	NSFileManager *manager = [[NSFileManager alloc] init];
+	NSString *patchedDestinationDirectory = [[NSString stringWithFormat:@"%@", destinationDirectory] stringByReplacingOccurrencesOfString:@"file://" withString:@""];
+	NSString *patchedSourceDirectory = [[NSString stringWithFormat:@"%@", sourceDirectory] stringByReplacingOccurrencesOfString:@"file://" withString:@""];
+	NSArray *filesToMigrate = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:patchedSourceDirectory error:NULL];
+	HBLogDebug(@"filesToMigrate %@", filesToMigrate);
+	HBLogDebug(@"patchedSourceDirectory %@", patchedSourceDirectory);
+	HBLogDebug(@"destinationDirectorynewdir %@", patchedDestinationDirectory);
+	HBLogDebug(@"destinationDirectoryNSFileManager %d", [[NSFileManager defaultManager] fileExistsAtPath:patchedDestinationDirectory]);
+	HBLogDebug(@"destinationDirectorydestinationDirectory %@", destinationDirectory);
 	BOOL errorOccurred = NO;
-	BOOL movingFiles = destinationDirectory.length > 0;
+	BOOL movingFiles = patchedDestinationDirectory.length > 0;
 
-	if (movingFiles && ![manager fileExistsAtPath:destinationDirectory])
-		[manager createDirectoryAtPath:destinationDirectory withIntermediateDirectories:YES attributes:nil error:NULL];
+	if (movingFiles && ![manager fileExistsAtPath:patchedDestinationDirectory]) {
+		HBLogDebug(@"directory create");
+		[manager createDirectoryAtPath:patchedDestinationDirectory withIntermediateDirectories:YES attributes:nil error:NULL];
+		HBLogDebug(@"directory created");
+	}
 
 	for (NSString *file in filesToMigrate)
 	{
@@ -90,12 +99,15 @@
 			continue;
 
 		// get the source path
-		NSString *sourcePath = [sourceDirectory stringByAppendingPathComponent:file];
-		
+		HBLogDebug(@"running sourcePath... %@", sourceDirectory);
+		NSString *sourcePath = [patchedSourceDirectory stringByAppendingPathComponent:file];
+		HBLogDebug(@"sourcePath... %@", sourcePath);
+
 		// move/delete it
 		if (movingFiles)
 		{
-			NSString *destinationPath = [destinationDirectory stringByAppendingPathComponent:file]; 
+			HBLogDebug(@"movingFiles...");
+			NSString *destinationPath = [patchedDestinationDirectory stringByAppendingPathComponent:file];
 			if (![manager moveItemAtPath:sourcePath toPath:destinationPath error:NULL])
 				errorOccurred = YES;
 		}

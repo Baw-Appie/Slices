@@ -38,8 +38,6 @@
 
 - (void)openTwitter:(id)arg1
 {
-	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"http://twitter.com/subdiox"]
-                                   options:@{}
-                         completionHandler:nil];
+	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"http://twitter.com/subdiox"] options:@{} completionHandler:nil];
 }
 @end

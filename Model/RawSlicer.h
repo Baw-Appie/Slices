@@ -5,10 +5,10 @@
 
 @interface RawSlicer : NSObject
 @property (nonatomic, readonly) NSArray *slices;
-@property (nonatomic) NSString *currentSlice;
+@property (nonatomic, strong) NSString *currentSlice;
 
-@property NSString *workingDirectory;
-@property NSString *slicesDirectory;
+@property (nonatomic, strong) NSString *workingDirectory;
+@property (nonatomic, strong) NSString *slicesDirectory;
 
 - (instancetype)initWithWorkingDirectory:(NSString *)workingDirectory slicesDirectory:(NSString *)slicesDirectory;
 

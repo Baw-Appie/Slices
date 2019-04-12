@@ -1,5 +1,5 @@
-TARGET = iphone:11.2:8.0
-ARCHS = armv7 armv7s arm64
+# TARGET = iphone:12.1.2:8.0
+# ARCHS = armv7 armv7s arm64
 
 XXX_LDFLAGS += -Wl,-segalign,4000
 ADDITIONAL_OBJCFLAGS = -fobjc-arc

@@ -1,6 +1,11 @@
 #import "Slicer.h"
 #import "../Headers/SpringBoardHeaders.h"
 
+@interface LSBundleProxy
++(id)bundleProxyForIdentifier:(id)arg1;
+-(NSDictionary *)groupContainerURLs;
+@end
+
 @interface Slicer ()
 @property (readwrite) NSString *displayIdentifier;
 
@@ -20,7 +25,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	self.applicationController = applicationController;
 	self.displayIdentifier = application.displayIdentifier;
 
-	NSLog(@"Slices: application=%@, applicationController=%@, displayIdentifier=%@", self.application, self.applicationController, self.displayIdentifier);
+	HBLogDebug(@"Slices: application=%@, applicationController=%@, displayIdentifier=%@", self.application, self.applicationController, self.displayIdentifier);
 
 	// get application directory
 	if ([application respondsToSelector:@selector(dataContainerPath)]) {
@@ -29,7 +34,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		self.workingDirectory = [application info].dataContainerURL.path;
 	}
 
-  NSLog(@"Slices: workingDirectory=%@", self.workingDirectory);
+  HBLogDebug(@"Slices: workingDirectory=%@", self.workingDirectory);
 
 	if (!self.workingDirectory)
 		return nil;
@@ -48,14 +53,15 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
   // get application directory
   ALApplicationList *applicationList = [ALApplicationList sharedApplicationList];
   self.workingDirectory = [applicationList valueForKey:@"dataContainerPath" forDisplayIdentifier:displayIdentifier];
-	
+
 	if (!self.workingDirectory) {
 		FBApplicationInfo *appInfo = [objc_getClass("LSApplicationProxy") applicationProxyForIdentifier: displayIdentifier];
 		self.workingDirectory = appInfo.dataContainerURL.path;
 	}
+	HBLogDebug(@"A1 %@", self.workingDirectory);
 
   if (!self.workingDirectory) {
-		NSLog(@"[Slices] Error: working directory cannot be found");
+		HBLogDebug(@"[Slices] Error: working directory cannot be found");
     return nil;
 	}
 
@@ -68,22 +74,36 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	if (!self.appSharing)
 		return @[ ];
 
-	Class LSApplicationProxyClass = objc_getClass("LSApplicationProxy");
-	if (LSApplicationProxyClass && [LSApplicationProxyClass instancesRespondToSelector:@selector(groupContainers)])
+	HBLogDebug(@"A3 detected!");
+	// HBLogDebug(@"A4 %@", [[[objc_getClass("SBApplicationController") sharedInstance] applicationWithBundleIdentifier:self.displayIdentifier] dataContainerURL]);
+
+	// Class SBApplicationControllerClass = objc_getClass("SBApplicationController");
+	// if (SBApplicationControllerClass)
+	// {
+	// 	NSString *mainSliceDirectory = [self.slicesDirectory stringByDeletingLastPathComponent];
+	// 	NSDictionary *appGroupContainers = [[[SBApplicationControllerClass sharedInstance] applicationWithBundleIdentifier:self.displayIdentifier] dataContainerURL];
+	// HBLogDebug(@"A4 %@", [[objc_getClass("LSBundleProxy") bundleProxyForIdentifier:self.displayIdentifier] groupContainerURLs]);
+
+	Class LSBundleProxyClass = objc_getClass("LSBundleProxy");
+	if (LSBundleProxyClass && [LSBundleProxyClass instancesRespondToSelector:@selector(groupContainerURLs)])
 	{
 		NSString *mainSliceDirectory = [self.slicesDirectory stringByDeletingLastPathComponent];
-		NSDictionary *appGroupContainers = [[LSApplicationProxyClass applicationProxyForIdentifier:self.displayIdentifier] groupContainers];
-
+		HBLogDebug(@"A4 %@", mainSliceDirectory);
+		NSDictionary *appGroupContainers = [[LSBundleProxyClass bundleProxyForIdentifier:self.displayIdentifier] groupContainerURLs];
+		HBLogDebug(@"A5 %@", appGroupContainers);
 		NSMutableArray *appGroupSlicers = [[NSMutableArray alloc] init];
 		for (NSString *groupIdentifier in [appGroupContainers allKeys])
 		{
 			NSString *groupContainer = [appGroupContainers objectForKey:groupIdentifier];
 			NSString *groupSlicesDirectory = [mainSliceDirectory stringByAppendingPathComponent:groupIdentifier];
 
+			HBLogDebug(@"A2 %@", groupContainer);
 			AppGroupSlicer *appGroupSlicer = [[AppGroupSlicer alloc] initWithWorkingDirectory:groupContainer slicesDirectory:groupSlicesDirectory];
+			HBLogDebug(@"A6 %@", appGroupSlicer);
 			[appGroupSlicers addObject:appGroupSlicer];
 		}
 
+		HBLogDebug(@"A7 %@", appGroupSlicers);
 		return appGroupSlicers;
 	} else {
 		return @[ ];
@@ -168,6 +188,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 }
 
 - (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler {
+	HBLogDebug(@"switchToSlice");
 	if (targetSliceName.length > 0 && ![self.currentSlice isEqualToString:targetSliceName]) {
 		[self killApplication];
 	}
@@ -175,7 +196,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist"];
 	BOOL success = [super switchToSlice:targetSliceName ignoreSuffixes:IGNORE_SUFFIXES];
 	if (!success) {
-		NSLog(@"Slices: switchToSlice failed");
+		HBLogDebug(@"Slices: switchToSlice failed");
 		if (completionHandler)
 			completionHandler(NO);
 		return;
@@ -251,7 +272,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 
 	NSArray *slices = self.slices;
 	NSString *defaultSlice = self.defaultSlice;
-	
+
 	// update default slice
 	if ([defaultSlice isEqualToString:sliceName]) {
 		if (slices.count > 0) {

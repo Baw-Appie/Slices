@@ -1,5 +1,5 @@
-TARGET = iphone:11.2:8.0
-ARCHS = armv7 armv7s arm64
+# TARGET = iphone:11.2:8.0
+# ARCHS = armv7 armv7s arm64
 ADDITIONAL_OBJCFLAGS = -fobjc-arc
 
 include $(THEOS)/makefiles/common.mk

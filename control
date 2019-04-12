@@ -1,6 +1,6 @@
 Package: com.subdiox.slices2
 Name: Slices 2
-Depends: firmware (>= 8), mobilesubstrate, preferenceloader, applist (>= 1.5.0), com.subdiox.sudo
+Depends: firmware (>=12), mobilesubstrate, preferenceloader, applist (>= 1.5.0)
 Conflicts: com.expetelek.slices
 Version: 1.0b2
 Architecture: iphoneos-arm
