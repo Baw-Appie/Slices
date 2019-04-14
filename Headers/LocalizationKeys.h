@@ -23,4 +23,4 @@
 #define USER_APPLICATIONS @"User Applications"
 
 static NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"];
-#define Localize(key) LocalizeString(key, bundle)
+#define Localize(key) [[NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"] localizedStringForKey:key value:key table:@"Slices"]

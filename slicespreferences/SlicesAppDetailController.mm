@@ -95,7 +95,7 @@ extern NSString* const PSDeletionActionKey;
 	[specifiers addObject:appSharingSwitchSpecifier];
 
 	// localize all the strings
-	NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"];
+	// NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"];
 	for (PSSpecifier *specifier in specifiers) {
 		NSString *footerTextValue = [specifier propertyForKey:@"footerText"];
 		if (footerTextValue) {
@@ -143,7 +143,7 @@ extern NSString* const PSDeletionActionKey;
 		} else {
 			NSLog(@"Slices: slice creation failed");
 		}
-		
+
 		[self refreshView:YES];
 
 		_specifierToRename = nil;

@@ -20,7 +20,7 @@
 		_specifiers = [self loadSpecifiersFromPlistName:@"SlicesPreferences" target:self];
 
 		// localize all the strings
-		NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"];
+		// NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"];
 		for (PSSpecifier *specifier in _specifiers)
 		{
 			NSString *footerTextValue = [specifier propertyForKey:@"footerText"];

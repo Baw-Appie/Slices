@@ -1,6 +1,8 @@
 #import <substrate.h>
 #import "Model/Slicer.h"
 #import "Headers/SpringBoardHeaders.h"
+#import <AppSupport/CPDistributedMessagingCenter.h>
+#import <rocketbootstrap/rocketbootstrap.h>
 
 #define PREFERENCE_IDENTIFIER CFSTR("com.subdiox.slicespreferences")
 #define ENABLED_KEY CFSTR("isEnabled")
@@ -10,12 +12,17 @@
 
 #define CURRENT_SETTINGS_VERSION 1
 
-static BOOL isEnabled, hasSeenWelcomeMessage, showNewSliceOption;
+static BOOL isEnabled, hasSeenWelcomeMessage, showNewSliceOption, use3DTouch;
 static NSInteger version;
 
 %hook SpringBoard
 - (void)applicationDidFinishLaunching:(id)application {
 	%orig;
+
+	CPDistributedMessagingCenter * messagingCenter = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
+	rocketbootstrap_distributedmessagingcenter_apply(messagingCenter);
+	[messagingCenter runServerOnCurrentThread];
+	[messagingCenter registerForMessageName:@"selectSlices" target:self selector:@selector(selectSlices:withUserInfo:)];
 
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.subdiox.slicespreferences.plist"];
 	if (!prefs) {
@@ -45,30 +52,58 @@ static NSInteger version;
 		CFPreferencesSetAppValue(CFSTR("hasSeenWelcomeMessage"), kCFBooleanTrue, CFSTR("com.subdiox.slicespreferences"));
 	}
 }
+
+%new
+-(void)selectSlices:(NSString *)name withUserInfo:(NSDictionary *)userInfo {
+	HBLogDebug(@"Request Receviedjeinovaanscansc9unhauwdjh9poaunhxi!");
+	SBApplication *application = [[NSClassFromString(@"SBApplicationController") sharedInstance] applicationWithBundleIdentifier:userInfo[@"application"]];
+	Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
+	NSString *currentSlice = slicer.currentSlice;
+	HBLogDebug(@"Request %@!", currentSlice);
+	NSString *actionSheetTitle;
+	if (currentSlice.length > 0)
+		actionSheetTitle = [NSString stringWithFormat:@"%@: %@", Localize(@"Current Slice"), currentSlice];
+	else if (slicer.slices.count < 1)
+		actionSheetTitle = Localize(@"All existing data will be copied into the new slice.");
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:actionSheetTitle message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+	NSArray *slices = slicer.slices;
+	for (NSString *slice in slices) {
+		[alert addAction:[UIAlertAction actionWithTitle:slice style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+			Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
+			[slicer switchToSlice:action.title completionHandler:^(BOOL success) {
+				[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended: NO];
+			}];
+		}]];
+	}
+	if (showNewSliceOption) {
+		[alert addAction:[UIAlertAction actionWithTitle:Localize(@"New Slice") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+			UIAlertController *alert = [UIAlertController alertControllerWithTitle:Localize(@"New Slice") message:Localize(@"Enter the slice name") preferredStyle:UIAlertControllerStyleAlert];
+			[alert addAction: [UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:nil]];
+			[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+				textField.placeholder = @"slice name";
+			}];
+			[alert addAction:[UIAlertAction actionWithTitle:Localize(@"OK") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+				NSString *sliceName = alert.textFields[0].text;
+				Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
+				BOOL created = [slicer createSlice:sliceName];
+				if (created) {
+					[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended: NO];
+				}
+			}]];
+			[[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+		}]];
+	}
+	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:nil]];
+	[[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+}
 %end
 
-%hook SBIconView
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-	if (!isEnabled) {
+%hook SBUIController
+-(void)activateApplication:(id)arg1 fromIcon:(id)arg2 location:(long long)arg3 activationSettings:(id)arg4 actions:(id)arg5 {
+	if (!isEnabled || use3DTouch) {
 		%orig;
 	} else {
-		//[self cancelLongPressTimer];
-
-		BOOL touchDownInIcon = (BOOL)(MSHookIvar<unsigned int>(self, "_touchDownInIcon") & 0xFF);
-		BOOL isGrabbed = (BOOL)(MSHookIvar<unsigned int>(self, "_isGrabbed") & 8);
-
-		BOOL isEditing;
-		if ([self respondsToSelector:@selector(setIsJittering:)]) {
-			isEditing = (BOOL)(MSHookIvar<unsigned int>(self, "_isJittering") & 2);
-		} else {
-			isEditing = (BOOL)(MSHookIvar<unsigned int>(self, "_isEditing") & 2);
-		}
-
-		id<SBIconViewDelegate> delegate = MSHookIvar< id<SBIconViewDelegate> >(self, "_delegate");
-		BOOL respondsToIconTapped = [delegate respondsToSelector:@selector(iconTapped:)];
-		//BOOL allowsTapWhileEditing = [self allowsTapWhileEditing];
-
-		SBApplication *application = [self application];
+		SBApplication *application = arg1;
 		BOOL isUserApplication = NO;
 
 		if ([application respondsToSelector:@selector(dataContainerPath)]) {
@@ -77,76 +112,16 @@ static NSInteger version;
 			isUserApplication = [[application info].dataContainerURL.path hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
 		}
 
-		BOOL wouldHaveLaunched = !isGrabbed && [self _delegateTapAllowed] && touchDownInIcon && !isEditing && respondsToIconTapped;
-		if (wouldHaveLaunched && isUserApplication) {
-			Slicer *slicer = [[Slicer alloc] initWithApplication:[self application] controller:[%c(SBApplicationController) sharedInstance]];
+		if (isUserApplication) {
+			Slicer *slicer = [[Slicer alloc] initWithApplication:arg1 controller:[%c(SBApplicationController) sharedInstance]];
 			HBLogDebug(@"Slices: slicer=%@", slicer);
 			BOOL askOnTouch = slicer.askOnTouch;
 
 			if (askOnTouch) {
-				NSString *actionSheetTitle;
-				NSString *currentSlice = slicer.currentSlice;
-				if (currentSlice.length > 0)
-					actionSheetTitle = [NSString stringWithFormat:@"%@: %@", Localize(@"Current Slice"), currentSlice];
-				else if (slicer.slices.count < 1)
-					actionSheetTitle = Localize(@"All existing data will be copied into the new slice.");
-
-				UIAlertController *alert = [UIAlertController
-                alertControllerWithTitle:actionSheetTitle
-                                 message:nil
-                          preferredStyle:UIAlertControllerStyleActionSheet];
-				// add button foreach slice
-				NSArray *slices = slicer.slices;
-				for (NSString *slice in slices) {
-					[alert addAction:[UIAlertAction
-								actionWithTitle:slice
-													style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-						// switch slice
-						Slicer *slicer = [[Slicer alloc] initWithApplication:[self application] controller:[%c(SBApplicationController) sharedInstance]];
-						[slicer switchToSlice:action.title completionHandler:^(BOOL success) {
-							// emulate the tap (launch the app)
-							id<SBIconViewDelegate> delegate = MSHookIvar< id<SBIconViewDelegate> >(self, "_delegate");
-							[delegate iconTapped:self];
-	    			}];
-					}]];
-				}
-				if (showNewSliceOption) {
-					[alert addAction:[UIAlertAction
-								actionWithTitle:Localize(@"New Slice")
-													style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-						// ask for the slice name
-						UIAlertController *alert = [UIAlertController
-												alertControllerWithTitle:Localize(@"New Slice")
-																				message:Localize(@"Enter the slice name")
-																	preferredStyle:UIAlertControllerStyleAlert];
-						[alert addAction: [UIAlertAction
-																actionWithTitle:Localize(@"Cancel")
-																					style:UIAlertActionStyleCancel
-																				handler:nil]];
-						[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-							textField.placeholder = @"slice name";
-						}];
-						[alert addAction:[UIAlertAction actionWithTitle:Localize(@"OK") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-							NSString *sliceName = alert.textFields[0].text;
-
-							// create the slice
-							Slicer *slicer = [[Slicer alloc] initWithApplication:[self application] controller:[%c(SBApplicationController) sharedInstance]];
-							BOOL created = [slicer createSlice:sliceName];
-
-							// if no errors occured, emulate the tap
-							if (created) {
-								id<SBIconViewDelegate> delegate = MSHookIvar< id<SBIconViewDelegate> >(self, "_delegate");
-								[delegate iconTapped:self];
-							}
-						}]];
-						[[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
-					}]];
-				}
-				[alert addAction: [UIAlertAction
-														actionWithTitle:Localize(@"Cancel")
-																			style:UIAlertActionStyleCancel
-																		handler:nil]];
-				[[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+				CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
+				rocketbootstrap_distributedmessagingcenter_apply(c);
+				NSDictionary * message = [NSDictionary dictionaryWithObjectsAndKeys:[application bundleIdentifier], @"application", nil];
+				[c sendMessageName:@"selectSlices" userInfo:message];
 			} else {
 				[slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
 					%orig;
@@ -157,12 +132,53 @@ static NSInteger version;
 		}
 	}
 }
+%end
 
-%new
-- (SBApplication *)application {
-	return [self.icon application];
+%hook SBUIIconForceTouchController
+-(void)_presentAnimated:(BOOL)arg1 withCompletionHandler:(void (^)())arg2 {
+	SBUIIconForceTouchIconViewWrapperView *wrapperView = MSHookIvar<SBUIIconForceTouchIconViewWrapperView *>(self.iconForceTouchViewController, "_iconViewWrapperViewAbove");
+	HBLogDebug(@"wrapperView %@", wrapperView);
+	NSString *bundle = [wrapperView.iconView.icon applicationBundleID];
+	if(bundle && [wrapperView respondsToSelector:@selector(iconView)]) {
+		SBApplication *application = [wrapperView.iconView.icon application];
+
+		if (!isEnabled || !use3DTouch) {
+			HBLogDebug(@"Running orig");
+			return %orig;
+		} else {
+			BOOL isUserApplication = NO;
+			if ([application respondsToSelector:@selector(dataContainerPath)]) {
+				isUserApplication = [[application dataContainerPath] hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
+			} else {
+				isUserApplication = [[application info].dataContainerURL.path hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
+			}
+			Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
+			HBLogDebug(@"Slices: slicer=%@", slicer);
+			BOOL askOnTouch = slicer.askOnTouch;
+			NSString *currentSlice = slicer.currentSlice;
+			if (askOnTouch) {
+				// ask on touch
+				%orig;
+				// arg2();
+				HBLogDebug(@"Request to SpringBoard...");
+				CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
+				rocketbootstrap_distributedmessagingcenter_apply(c);
+				NSDictionary * message = [NSDictionary dictionaryWithObjectsAndKeys:bundle, @"application", nil];
+				[c sendMessageName:@"selectSlices" userInfo:message];
+			} else {
+				if([currentSlice isEqualToString:slicer.defaultSlice]) {
+					%orig;
+				} else {
+					[slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
+						%orig;
+					}];
+				}
+			}
+		}
+	} else {
+		%orig;
+	}
 }
-
 %end
 
 static void loadSettings() {
@@ -171,6 +187,9 @@ static void loadSettings() {
 	Boolean keyExists;
 	isEnabled = CFPreferencesGetAppBooleanValue(ENABLED_KEY, PREFERENCE_IDENTIFIER, &keyExists);
 	isEnabled = (isEnabled || !keyExists);
+
+	use3DTouch = CFPreferencesGetAppBooleanValue(CFSTR("use3DTouch"), PREFERENCE_IDENTIFIER, &keyExists);
+	use3DTouch = (use3DTouch || !keyExists);
 
 	showNewSliceOption = CFPreferencesGetAppBooleanValue(SHOW_NEW_SLICE_OPTION_KEY, PREFERENCE_IDENTIFIER, &keyExists);
 	showNewSliceOption = (showNewSliceOption || !keyExists);
