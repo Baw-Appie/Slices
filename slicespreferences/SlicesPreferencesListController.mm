@@ -6,6 +6,7 @@
 
 #import <AppList/AppList.h>
 
+#import "../Headers/SpringBoardHeaders.h"
 #import "../Model/GameCenterAccountManager.h"
 #import "../Headers/LocalizationKeys.h"
 

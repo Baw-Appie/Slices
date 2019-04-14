@@ -36,7 +36,7 @@ extern NSString* const PSDeletionActionKey;
 	if (!_slicer) {
 		NSString *displayIdentifier = self.specifier.properties[@"displayIdentifier"];
 		_slicer = [[Slicer alloc] initWithDisplayIdentifier:displayIdentifier];
-		NSLog(@"Slices: _slicer=%@", _slicer);
+		HBLogDebug(@"Slices: _slicer=%@", _slicer);
 	}
 
 	// create a temporary specifiers array (mutable)
@@ -130,18 +130,18 @@ extern NSString* const PSDeletionActionKey;
 		// get the entered slice name
 		NSString *sliceName = alert.textFields[0].text;
 
-		NSLog(@"Slices: _slicer = %@", _slicer);
+		HBLogDebug(@"Slices: _slicer = %@", _slicer);
 
 		// create the slice
 		BOOL created = [_slicer createSlice:sliceName];
 
 		// if no errors occurred, emulate the tap
 		if (created) {
-			NSLog(@"Slices: slice created!");
+			HBLogDebug(@"Slices: slice created!");
 			// successfully created
 			// maybe do stuff in the future here
 		} else {
-			NSLog(@"Slices: slice creation failed");
+			HBLogDebug(@"Slices: slice creation failed");
 		}
 
 		[self refreshView:YES];
@@ -242,7 +242,7 @@ extern NSString* const PSDeletionActionKey;
 
 - (void)refreshView:(BOOL)forceHardReload
 {
-	NSLog(@"Slices: refreshView");
+	HBLogDebug(@"Slices: refreshView");
 	[_defaultSpecifier loadValuesAndTitlesFromDataSource];
 
 	if (forceHardReload || _slicer.slices.count < 1) {

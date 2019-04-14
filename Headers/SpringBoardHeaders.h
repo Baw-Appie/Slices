@@ -6,6 +6,7 @@
 - (void)launchApplicationWithIdentifier: (NSString*)identifier suspended: (BOOL)suspended;
 - (id)displayIdentifier;
 - (void)setStatusBarHidden:(bool)arg1 animated:(bool)arg2;
+- (void)openURL:(id)arg1 options:(id)arg2 completionHandler:(/*^block*/ id)arg3 ;
 void receivedStatusBarChange(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 void receivedLandscapeRotate();
 void receivedPortraitRotate();

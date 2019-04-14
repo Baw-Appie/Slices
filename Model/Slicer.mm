@@ -163,28 +163,29 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 }
 
 - (void)killApplication {
+	HBLogDebug(@"Killing Application!");
 	if (self.ignoreNextKill) {
 		self.ignoreNextKill = NO;
 		return;
 	}
 
 	// if FBApplicationProcess has 'stop', use that
-	Class FBApplicationProcessClass = objc_getClass("FBApplicationProcess");
-	if ([FBApplicationProcessClass instancesRespondToSelector:@selector(stop)]) {
-		if (self.application) {
-			FBApplicationProcess *process = MSHookIvar<FBApplicationProcess *>(self.application, "_process");
-			[process stop];
-		}
-	} else {
+	// Class FBApplicationProcessClass = objc_getClass("FBApplicationProcess");
+	// if ([FBApplicationProcessClass instancesRespondToSelector:@selector(stop)]) {
+	// 	if (self.application) {
+	// 		FBApplicationProcess *process = MSHookIvar<FBApplicationProcess *>(self.application, "_process");
+	// 		[process stop];
+	// 	}
+	// } else {
 		BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, @"Killed from Slices");
-	}
+	// }
 
 	// must kill this in iOS 8
-	pid_t pid;
-  const char *args[] = {"sh", "-c", "sudo launchctl stop com.apple.cfprefsd.xpc.daemon", NULL};
-  posix_spawn(&pid, "/bin/sh", NULL, NULL, (char* const*)args, NULL);
-
-	[NSThread sleepForTimeInterval:0.1];
+// 	pid_t pid;
+//   const char *args[] = {"sh", "-c", "sudo launchctl stop com.apple.cfprefsd.xpc.daemon", NULL};
+//   posix_spawn(&pid, "/bin/sh", NULL, NULL, (char* const*)args, NULL);
+//
+// 	[NSThread sleepForTimeInterval:0.1];
 }
 
 - (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler {
