@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Creation Error</key>
+	<string>ディレクトリ作成エラー</string>
+	<key>Failed to create &apos;%@&apos; directory.</key>
+	<string>&apos;%@&apos;ディレクトリの作成に失敗しました。</string>
+	<key>Already Exists</key>
+	<string>既存のスライス</string>
+	<key>There is already a slice named &apos;%@&apos;.</key>
+	<string>&apos;%@&apos;という名前のスライスはすでに存在します。</string>
+	<key>All existing data will be copied into the new slice.</key>
+	<string>既存の全データは新規スライスにコピーされます。</string>
+	<key>Invalid Name</key>
+	<string>無効な名前</string>
+	<key>The name &apos;%@&apos; is invalid. Make sure it contains no slashes.</key>
+	<string>&apos;%@&apos;という名前は無効です。スラッシュが含まれていないことを確認してください。</string>
+	<key>Cancel</key>
+	<string>キャンセル</string>
+	<key>User Applications</key>
+	<string>ユーザーアプリ</string>
+	<key>Ask on Touch</key>
+	<string>タップ時に確認</string>
+	<key>Deleting a slice will delete all the data associated with it. To rename a slice, tap it. If no slices exists and you create one, all the existing data will be copied into the new slice.</key>
+	<string>スライスを削除すると、関連する全データが削除されます。スライス名を変更する場合はタップしてください。スライスが存在せず、これから新しく作る場合は、既存の全データが新しいスライスにコピーされます。</string>
+	<key>Default Slice</key>
+	<string>デフォルトのスライス</string>
+	<key>No Slices</key>
+	<string>スライスなし</string>
+	<key>Create Slice</key>
+	<string>スライスを作成</string>
+	<key>New Slice</key>
+	<string>新規スライス</string>
+	<key>Enter the slice name</key>
+	<string>スライス名を入力してください</string>
+	<key>Enter the new slice name</key>
+	<string>新しいスライス名を入力してください</string>
+	<key>Rename Slice</key>
+	<string>スライス名を変更</string>
+	<key>Default</key>
+	<string>デフォルト</string>
+	<key>@subdiox</key>
+	<string>@subdiox</string>
+	<key>Applications</key>
+	<string>アプリ</string>
+	<key>Disabling will leave all applications set to the last slice they were on.</key>
+	<string>機能を無効化すると、全てのアプリは最後のスライスのデータを使うようになります。</string>
+	<key>Enabled</key>
+	<string>有効にする</string>
+	<key>General</key>
+	<string>一般</string>
+	<key>If you have any questions or experience any problems, contact subdiox using Twitter or email (through Cydia).</key>
+	<string>質問や問題があれば、subdioxにTwitterかメール(Cydia経由)で連絡してください。</string>
+	<key>Links</key>
+	<string>リンク</string>
+	<key>If the Ask on Touch switch is enabled, you will be asked which slice to use when tapping the application&apos;s icon on the homescreen.
+
+If it&apos;s disabled, the application will start with the specified Default Slice.</key>
+	<string>「タップ時に確認」が有効のとき、ホーム画面上のアプリアイコンをタップしたときどのスライスを用いて起動するか選択します。
+
+無効の場合は、アプリは指定のデフォルトスライスを用いて起動します。</string>
+	<key>Accounts</key>
+	<string>アカウント</string>
+	<key>Manage your Game Center accounts.</key>
+	<string>Game Centerアカウントの管理をします。</string>
+	<key>Advanced</key>
+	<string>高度な設定</string>
+	<key>Show New Slice Option</key>
+	<string>新規スライスのオプションを表示</string>
+	<key>Disabling will hide the New Slice option when Ask on Touch is enabled.</key>
+	<string>無効化すると「タップ時に確認」が有効の際に、新規スライスのオプションが非表示になります。</string>
+	<key>Include Shared Data</key>
+	<string>共有データを含める</string>
+	<key>Disabling will leave data shared with other applications untouched.</key>
+	<string>無効化すると他のアプリと共有されているデータは処理の対象外となります。</string>
+	<key>Current Slice</key>
+	<string>現在のスライス</string>
+	<key>No Accounts</key>
+	<string>アカウントなし</string>
+	<key>New Account</key>
+	<string>新規アカウント</string>
+	<key>Password</key>
+	<string>パスワード</string>
+	<key>Required</key>
+	<string>必須</string>
+	<key>Add Account</key>
+	<string>アカウントを追加</string>
+	<key>Sign in to a Game Center account.</key>
+	<string>Game Centerアカウントにサインインします。</string>
+	<key>Slice %d</key>
+	<string>スライス %d</string>
+	<key>Slices</key>
+	<string>スライス一覧</string>
+	<key>Slice Name</key>
+	<string>スライス名</string>
+</dict>
+</plist>

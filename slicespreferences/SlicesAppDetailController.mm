@@ -36,7 +36,6 @@ extern NSString* const PSDeletionActionKey;
 	if (!_slicer) {
 		NSString *displayIdentifier = self.specifier.properties[@"displayIdentifier"];
 		_slicer = [[Slicer alloc] initWithDisplayIdentifier:displayIdentifier];
-		NSLog(@"Slices: _slicer=%@", _slicer);
 	}
 
 	// create a temporary specifiers array (mutable)
@@ -69,6 +68,7 @@ extern NSString* const PSDeletionActionKey;
 		//specifier->action = @selector(renameSlice:);
 		[specifier setProperty:NSStringFromSelector(@selector(removedSpecifier:)) forKey:PSDeletionActionKey];
 		[specifier.properties setValue:_slicer forKey:@"slicer"];
+		[specifier.properties setValue:@"1" forKey:@"neverLocalize"];
 		[specifiers addObject:specifier];
 	}
 
@@ -91,7 +91,7 @@ extern NSString* const PSDeletionActionKey;
 	[specifiers addObject:advancedGroupSpecifier];
 
 	// app-sharing switch specifier
-	PSSpecifier *appSharingSwitchSpecifier = [PSSpecifier preferenceSpecifierNamed:@"App Sharing" target:self set:@selector(setAppSharing:forSpecifier:) get:@selector(getAppSharing:) detail:nil cell:PSSwitchCell edit:nil];
+	PSSpecifier *appSharingSwitchSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Include Shared Data" target:self set:@selector(setAppSharing:forSpecifier:) get:@selector(getAppSharing:) detail:nil cell:PSSwitchCell edit:nil];
 	[specifiers addObject:appSharingSwitchSpecifier];
 
 	// localize all the strings
@@ -104,7 +104,9 @@ extern NSString* const PSDeletionActionKey;
 
 		NSString *name = specifier.name; // "label" key in plist
 		if (name) {
-			specifier.name = Localize(name);
+			if (![[specifier propertyForKey:@"neverLocalize"] isEqual:@"1"]) {
+				specifier.name = Localize(name);
+			}
 		}
 	}
 
@@ -122,15 +124,13 @@ extern NSString* const PSDeletionActionKey;
 																style:UIAlertActionStyleCancel
 															handler:nil]];
 	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-			textField.text = @"New Slice";
+			textField.text = [NSString stringWithFormat:Localize(@"Slice %d"), _slicer.slices.count + 1];
 	}];
 	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Create Slice") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 		// they want to create a slice
 
 		// get the entered slice name
 		NSString *sliceName = alert.textFields[0].text;
-
-		NSLog(@"Slices: _slicer = %@", _slicer);
 
 		// create the slice
 		BOOL created = [_slicer createSlice:sliceName];
@@ -242,7 +242,6 @@ extern NSString* const PSDeletionActionKey;
 
 - (void)refreshView:(BOOL)forceHardReload
 {
-	NSLog(@"Slices: refreshView");
 	[_defaultSpecifier loadValuesAndTitlesFromDataSource];
 
 	if (forceHardReload || _slicer.slices.count < 1) {

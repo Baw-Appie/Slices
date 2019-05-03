@@ -1,9 +1,8 @@
-TARGET = iphone:11.2:8.0
-ARCHS = armv7 armv7s arm64
+THEOS_DEVICE_IP = 192.168.11.8
+THEOS_DEVICE_PORT = 22
 
-XXX_LDFLAGS += -Wl,-segalign,4000
+ARCHS = armv7 armv7s arm64 arm64e
 ADDITIONAL_OBJCFLAGS = -fobjc-arc
-
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = Slices

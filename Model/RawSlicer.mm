@@ -147,7 +147,6 @@
 		return NO;
 	
 	NSArray *slices = self.slices;
-
 	// update current slice
 	if ([currentSlice isEqualToString:sliceName] && slices.count > 0)
 	{

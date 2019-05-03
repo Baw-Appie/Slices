@@ -20,16 +20,12 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	self.applicationController = applicationController;
 	self.displayIdentifier = application.displayIdentifier;
 
-	NSLog(@"Slices: application=%@, applicationController=%@, displayIdentifier=%@", self.application, self.applicationController, self.displayIdentifier);
-
 	// get application directory
 	if ([application respondsToSelector:@selector(dataContainerPath)]) {
 		self.workingDirectory = [application dataContainerPath];
 	} else {
 		self.workingDirectory = [application info].dataContainerURL.path;
 	}
-
-  NSLog(@"Slices: workingDirectory=%@", self.workingDirectory);
 
 	if (!self.workingDirectory)
 		return nil;
@@ -69,21 +65,19 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		return @[ ];
 
 	Class LSApplicationProxyClass = objc_getClass("LSApplicationProxy");
-	if (LSApplicationProxyClass && [LSApplicationProxyClass instancesRespondToSelector:@selector(groupContainers)])
-	{
+	if (LSApplicationProxyClass && [LSApplicationProxyClass instancesRespondToSelector:@selector(groupContainers)]) {
 		NSString *mainSliceDirectory = [self.slicesDirectory stringByDeletingLastPathComponent];
 		NSDictionary *appGroupContainers = [[LSApplicationProxyClass applicationProxyForIdentifier:self.displayIdentifier] groupContainers];
 
 		NSMutableArray *appGroupSlicers = [[NSMutableArray alloc] init];
-		for (NSString *groupIdentifier in [appGroupContainers allKeys])
-		{
+		for (NSString *groupIdentifier in [appGroupContainers allKeys]) {
 			NSString *groupContainer = [appGroupContainers objectForKey:groupIdentifier];
 			NSString *groupSlicesDirectory = [mainSliceDirectory stringByAppendingPathComponent:groupIdentifier];
 
 			AppGroupSlicer *appGroupSlicer = [[AppGroupSlicer alloc] initWithWorkingDirectory:groupContainer slicesDirectory:groupSlicesDirectory];
 			[appGroupSlicers addObject:appGroupSlicer];
 		}
-
+		
 		return appGroupSlicers;
 	} else {
 		return @[ ];
@@ -161,7 +155,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 
 	// must kill this in iOS 8
 	pid_t pid;
-  const char *args[] = {"sh", "-c", "sudo launchctl stop com.apple.cfprefsd.xpc.daemon", NULL};
+  const char *args[] = {"sh", "-c", "sud0 launchctl stop com.apple.cfprefsd.xpc.daemon", NULL};
   posix_spawn(&pid, "/bin/sh", NULL, NULL, (char* const*)args, NULL);
 
 	[NSThread sleepForTimeInterval:0.1];
@@ -175,7 +169,6 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist"];
 	BOOL success = [super switchToSlice:targetSliceName ignoreSuffixes:IGNORE_SUFFIXES];
 	if (!success) {
-		NSLog(@"Slices: switchToSlice failed");
 		if (completionHandler)
 			completionHandler(NO);
 		return;

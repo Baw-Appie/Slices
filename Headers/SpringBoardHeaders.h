@@ -41,15 +41,13 @@
 - (SBApplication *)application;
 @end
 
-@interface SBIconView : NSObject <UIActionSheetDelegate>
-{
-	BOOL _isGrabbed;
-	BOOL _touchDownInIcon;
-	BOOL _isEditing;
-	id<SBIconViewDelegate> _delegate;
-}
-@property SBIcon *icon; 
-
+@interface SBIconView : UIView <UIActionSheetDelegate>
+@property SBIcon *icon;
+- (BOOL)isGrabbed;
+- (BOOL)isEditing;
+- (BOOL)isDragging;
+- (BOOL)isTouchDownInIcon;
+- (id<SBIconViewDelegate>)delegate;
 - (void)_delegateTouchEnded:(BOOL)ended;
 - (BOOL)_delegateTapAllowed;
 - (void)setHighlighted:(BOOL)highlighted;
