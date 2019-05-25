@@ -22,6 +22,9 @@
 
 		// localize all the strings
 		// NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/Slices/Slices.bundle"];
+
+		HBLogDebug(@"3D Touch %d", self.traitCollection.forceTouchCapability != UIForceTouchCapabilityAvailable);
+
 		for (PSSpecifier *specifier in _specifiers)
 		{
 			NSString *footerTextValue = [specifier propertyForKey:@"footerText"];
@@ -29,8 +32,8 @@
 				[specifier setProperty:Localize(footerTextValue) forKey:@"footerText"];
 
 			NSString *name = specifier.name; // "label" key in plist
-			if (name)
-				specifier.name = Localize(name);
+			if (name) specifier.name = Localize(name);
+			if([name isEqualToString:@"Use 3D touch instead of normal touch"] && self.traitCollection.forceTouchCapability != UIForceTouchCapabilityAvailable) [self removeSpecifier:specifier];
 		}
 	}
 
@@ -39,6 +42,6 @@
 
 - (void)openTwitter:(id)arg1
 {
-	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"http://twitter.com/subdiox"] options:@{} completionHandler:nil];
+	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"http://twitter.com/BawAppie"] options:@{} completionHandler:nil];
 }
 @end

@@ -134,9 +134,11 @@ static NSInteger version;
 }
 %end
 
-%hook SBUIIconForceTouchController
+%hook SBUIIconForceTouchViewController
 -(void)_presentAnimated:(BOOL)arg1 withCompletionHandler:(void (^)())arg2 {
-	SBUIIconForceTouchIconViewWrapperView *wrapperView = MSHookIvar<SBUIIconForceTouchIconViewWrapperView *>(self.iconForceTouchViewController, "_iconViewWrapperViewAbove");
+	HBLogDebug(@"Running..");
+	// return %orig;
+	SBUIIconForceTouchIconViewWrapperView *wrapperView = MSHookIvar<SBUIIconForceTouchIconViewWrapperView *>(self, "_iconViewWrapperViewAbove");
 	HBLogDebug(@"wrapperView %@", wrapperView);
 	NSString *bundle = [wrapperView.iconView.icon applicationBundleID];
 	if(bundle && [wrapperView respondsToSelector:@selector(iconView)]) {
@@ -152,30 +154,37 @@ static NSInteger version;
 			} else {
 				isUserApplication = [[application info].dataContainerURL.path hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
 			}
-			Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
-			HBLogDebug(@"Slices: slicer=%@", slicer);
-			BOOL askOnTouch = slicer.askOnTouch;
-			NSString *currentSlice = slicer.currentSlice;
-			if (askOnTouch) {
-				// ask on touch
-				%orig;
-				// arg2();
-				HBLogDebug(@"Request to SpringBoard...");
-				CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
-				rocketbootstrap_distributedmessagingcenter_apply(c);
-				NSDictionary * message = [NSDictionary dictionaryWithObjectsAndKeys:bundle, @"application", nil];
-				[c sendMessageName:@"selectSlices" userInfo:message];
-			} else {
-				if([currentSlice isEqualToString:slicer.defaultSlice]) {
-					%orig;
+			if(isUserApplication) {
+				Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
+				HBLogDebug(@"Slices: slicer=%@", slicer);
+				BOOL askOnTouch = slicer.askOnTouch;
+				NSString *currentSlice = slicer.currentSlice;
+				if (askOnTouch) {
+					arg2();
+					[self dismissAnimated:true withCompletionHandler:nil];
+					HBLogDebug(@"Request to SpringBoard...");
+					CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
+					rocketbootstrap_distributedmessagingcenter_apply(c);
+					NSDictionary * message = [NSDictionary dictionaryWithObjectsAndKeys:bundle, @"application", nil];
+					[c sendMessageName:@"selectSlices" userInfo:message];
 				} else {
-					[slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
+					if([currentSlice isEqualToString:slicer.defaultSlice]) {
+						HBLogDebug(@"switchToSlice already done!");
 						%orig;
-					}];
+					} else {
+						HBLogDebug(@"try switchToSlice!");
+						[slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
+							HBLogDebug(@"switchToSlice Done!");
+							%orig;
+						}];
+					}
 				}
+			} else {
+				%orig;
 			}
 		}
 	} else {
+		HBLogDebug(@"No BundleID");
 		%orig;
 	}
 }

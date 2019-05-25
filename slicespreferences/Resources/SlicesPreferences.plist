@@ -36,7 +36,7 @@
 			<key>key</key>
 			<string>use3DTouch</string>
 			<key>label</key>
-			<string>use 3D Touch</string>
+			<string>Use 3D touch instead of normal touch</string>
 			<key>PostNotification</key>
 			<string>com.subdiox.slicespreferences/settingsChanged</string>
 		</dict>
@@ -100,12 +100,12 @@
 			<key>cell</key>
 			<string>PSButtonCell</string>
 			<key>label</key>
-			<string>@subdiox</string>
+			<string>@BawAppie</string>
 			<key>action</key>
 			<string>openTwitter:</string>
 		</dict>
 	</array>
 	<key>title</key>
-	<string>Slices 2</string>
+	<string>Slices 3</string>
 </dict>
 </plist>

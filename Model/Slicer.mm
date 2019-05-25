@@ -190,16 +190,24 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 
 - (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler {
 	HBLogDebug(@"switchToSlice");
+	if(targetSliceName == NULL) {
+		HBLogDebug(@"Slices: switchToSlice failed (NULL)");
+		if (completionHandler)
+			completionHandler(NO);
+		return;
+	}
 	if (targetSliceName.length > 0 && ![self.currentSlice isEqualToString:targetSliceName]) {
 		[self killApplication];
 	}
-
+	UIAlertView *switchAlert = [[UIAlertView alloc] initWithTitle:@"Switch slices" message:@"Please wait. This may take some time." delegate:self cancelButtonTitle:nil otherButtonTitles:nil];
+	[switchAlert show];
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist"];
 	BOOL success = [super switchToSlice:targetSliceName ignoreSuffixes:IGNORE_SUFFIXES];
 	if (!success) {
 		HBLogDebug(@"Slices: switchToSlice failed");
 		if (completionHandler)
 			completionHandler(NO);
+			[switchAlert dismissWithClickedButtonIndex:-1 animated:TRUE];
 		return;
 	}
 
@@ -215,6 +223,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	[gameCenterAccountManager switchToAccount:gameCenterAccount completionHandler:^(BOOL gameCenterSuccess) {
 		if (completionHandler) {
 			completionHandler(success && gameCenterSuccess);
+			[switchAlert dismissWithClickedButtonIndex:-1 animated:TRUE];
 		}
 	}];
 }

@@ -1,5 +1,10 @@
-# TARGET = iphone:11.2:8.0
-# ARCHS = armv7 armv7s arm64
+# TARGET = iphone:9.2:8.0
+ARCHS = arm64 armv7
+OS := $(shell uname)
+ifeq ($(OS),Darwin)
+  ARCHS += arm64e
+endif
+
 ADDITIONAL_OBJCFLAGS = -fobjc-arc
 
 include $(THEOS)/makefiles/common.mk

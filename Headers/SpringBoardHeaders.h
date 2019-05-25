@@ -74,6 +74,7 @@ void receivedPortraitRotate();
 }
 -(void)_presentAnimated:(BOOL)arg1 withCompletionHandler:(/*^block*/id)arg2 ;
 -(void)_dismissAnimated:(BOOL)arg1 withCompletionHandler:(/*^block*/id)arg2 ;
+-(BOOL)dismissAnimated:(BOOL)arg1 withCompletionHandler:(/*^block*/id)arg2 ;
 @end
 
 @interface SBUIIconForceTouchController : NSObject
@@ -86,6 +87,9 @@ void receivedPortraitRotate();
 
 @interface SBUIAppIconForceTouchControllerDataProvider
 @property (nonatomic,readonly) NSString * applicationBundleIdentifier;
+@end
+@interface SBUIAppIconForceTouchShortcutViewController
+@property (nonatomic,readonly) SBUIAppIconForceTouchControllerDataProvider * dataProvider;
 @end
 
 @interface LSApplicationProxy

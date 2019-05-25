@@ -10,6 +10,8 @@ extern NSString* const PSDeletionActionKey;
 {
 	Slicer *_slicer;
 	PSSpecifier *_defaultSpecifier;
+	PSSpecifier *_createSliceSpecifier;
+	PSSpecifier *_noSlicesSpecifier;
 }
 
 - (void)reloadSpecifiers;
@@ -18,9 +20,7 @@ extern NSString* const PSDeletionActionKey;
 @implementation SlicesAppDetailController
 - (id)specifiers
 {
-	if(_specifiers == nil)
-		[self reloadSpecifiers];
-
+	if(_specifiers == nil) [self reloadSpecifiers];
 	return _specifiers;
 }
 
@@ -28,10 +28,11 @@ extern NSString* const PSDeletionActionKey;
 {
 	[super viewWillAppear:animated];
 
-	[self refreshView:YES];
+	// [self refreshView:YES];
 }
 
 - (void)reloadSpecifiers {
+	HBLogDebug(@"Running reloadSpecifiers");
 	// create a slicer
 	if (!_slicer) {
 		NSString *displayIdentifier = self.specifier.properties[@"displayIdentifier"];
@@ -74,16 +75,19 @@ extern NSString* const PSDeletionActionKey;
 
 	// if there aren't any slices, tell them
 	if (slices.count < 1) {
-		[specifiers addObject:[PSSpecifier preferenceSpecifierNamed:@"No Slices" target:self set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil]];
+		_noSlicesSpecifier = [PSSpecifier preferenceSpecifierNamed:@"No Slices" target:self set:nil get:nil detail:nil cell:PSStaticTextCell edit:nil];
+		[specifiers addObject:_noSlicesSpecifier];
 		[self setEditingButtonHidden:YES animated:NO];
 	} else {
 		[self setEditingButtonHidden:NO animated:YES];
 	}
 
 	// create slice button specifier
-	PSSpecifier *createSliceSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Create Slice" target:self set:nil get:nil detail:nil cell:PSButtonCell edit:nil];
-	[createSliceSpecifier setButtonAction:@selector(createSlice:)];
-	[specifiers addObject:createSliceSpecifier];
+	HBLogDebug(@"Adding Create Slice %@", specifiers);
+	_createSliceSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Create Slice" target:self set:nil get:nil detail:nil cell:PSButtonCell edit:nil];
+	[_createSliceSpecifier setButtonAction:@selector(createSlice:)];
+	[specifiers addObject:_createSliceSpecifier];
+	HBLogDebug(@"Adding Create Slice %@", _createSliceSpecifier);
 
 	// advanced group specifier
 	PSSpecifier *advancedGroupSpecifier = [PSSpecifier preferenceSpecifierNamed:@"Advanced" target:self set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
@@ -108,8 +112,9 @@ extern NSString* const PSDeletionActionKey;
 		}
 	}
 
+	HBLogDebug(@"specifiers %@", specifiers);
 	// update the specifier ivar (immutable)
-	_specifiers = [specifiers copy];
+	_specifiers = specifiers;
 }
 
 - (void)createSlice:(PSSpecifier *)specifier {
@@ -140,11 +145,23 @@ extern NSString* const PSDeletionActionKey;
 			HBLogDebug(@"Slices: slice created!");
 			// successfully created
 			// maybe do stuff in the future here
+			[self removeSpecifier:_noSlicesSpecifier];
+
+			NSUInteger i = [self.specifiers indexOfObject:_createSliceSpecifier];
+			if(i == NSNotFound) return;
+			PSSpecifier *sp = [PSSpecifier preferenceSpecifierNamed:sliceName target:self set:nil get:nil detail:[SliceDetailController class] cell:PSLinkListCell edit:nil];
+			[sp setProperty:NSStringFromSelector(@selector(removedSpecifier:)) forKey:PSDeletionActionKey];
+			[sp.properties setValue:_slicer forKey:@"slicer"];
+			[self insertSpecifier:sp atIndex:i animated:YES];
+			// NSArray *array = MSHookIvar<NSArray *>(_defaultSpecifier, "_values");
+			// HBLogDebug(@"Done!!!!!!!!!!!!!!!!!!!!!!!!!!! %@", array);
+			MSHookIvar<NSArray *>(_defaultSpecifier, "_values") = nil;
+			[_defaultSpecifier loadValuesAndTitlesFromDataSource];
 		} else {
 			HBLogDebug(@"Slices: slice creation failed");
 		}
 
-		[self refreshView:YES];
+		// [self refreshView:YES];
 
 		_specifierToRename = nil;
 	}]];
@@ -234,6 +251,7 @@ extern NSString* const PSDeletionActionKey;
 
 - (NSArray *)valuesSource:(id)target
 {
+	HBLogDebug(@"Slices: Reloading...........");
 	NSArray *slices = _slicer.slices;
 	if (slices.count < 1)
 		return @[ Localize(@"Default") ];
@@ -243,11 +261,11 @@ extern NSString* const PSDeletionActionKey;
 - (void)refreshView:(BOOL)forceHardReload
 {
 	HBLogDebug(@"Slices: refreshView");
-	[_defaultSpecifier loadValuesAndTitlesFromDataSource];
-
 	if (forceHardReload || _slicer.slices.count < 1) {
 		[self reloadSpecifiers];
 	}
+
+	[_defaultSpecifier loadValuesAndTitlesFromDataSource];
 
 	[[self table] reloadData];
 	[self reload];
