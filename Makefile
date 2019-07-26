@@ -5,9 +5,8 @@ ifeq ($(OS),Darwin)
   ARCHS += arm64e
 endif
 
-XXX_LDFLAGS += -Wl,-segalign,4000
+ARCHS = armv7 armv7s arm64 arm64e
 ADDITIONAL_OBJCFLAGS = -fobjc-arc
-
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = Slices

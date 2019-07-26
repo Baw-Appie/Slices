@@ -92,8 +92,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		NSDictionary *appGroupContainers = [[LSBundleProxyClass bundleProxyForIdentifier:self.displayIdentifier] groupContainerURLs];
 		HBLogDebug(@"A5 %@", appGroupContainers);
 		NSMutableArray *appGroupSlicers = [[NSMutableArray alloc] init];
-		for (NSString *groupIdentifier in [appGroupContainers allKeys])
-		{
+		for (NSString *groupIdentifier in [appGroupContainers allKeys]) {
 			NSString *groupContainer = [appGroupContainers objectForKey:groupIdentifier];
 			NSString *groupSlicesDirectory = [mainSliceDirectory stringByAppendingPathComponent:groupIdentifier];
 
