@@ -29,28 +29,7 @@ static NSInteger version;
 		prefs = [[NSMutableDictionary alloc] init];
 	}
 
-	[prefs setObject:[NSNumber numberWithBool:YES] forKey:@"hasSeenWelcomeMessage"];
 	[prefs writeToFile:@"/var/mobile/Library/Preferences/com.subdiox.slicespreferences.plist" atomically:YES];
-
-	int rawVersion = CURRENT_SETTINGS_VERSION;
-	CFNumberRef versionReference = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &rawVersion);
-	CFPreferencesSetAppValue(VERSION_KEY, versionReference, PREFERENCE_IDENTIFIER);
-
-
-	if (!hasSeenWelcomeMessage) {
-		UIAlertController *alert = [UIAlertController
-                alertControllerWithTitle:Localize(@"Thank You")
-                                 message:Localize(@"Thank you for purchasing Slices! By default, no applications are configured to use Slices. To enable some, visit the Settings.")
-                          preferredStyle:UIAlertControllerStyleAlert];
-		[alert addAction: [UIAlertAction
-                        actionWithTitle:Localize(@"OK")
-                                  style:UIAlertActionStyleCancel
-                                handler:nil]];
-		[((UIViewController *)[%c(UIViewController) sharedInstance]) presentViewController:alert animated:YES completion:nil];
-
-		hasSeenWelcomeMessage = YES;
-		CFPreferencesSetAppValue(CFSTR("hasSeenWelcomeMessage"), kCFBooleanTrue, CFSTR("com.subdiox.slicespreferences"));
-	}
 }
 
 %new
