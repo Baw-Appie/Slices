@@ -1,6 +1,6 @@
 Package: com.rpgfarm.slices3
 Name: Slices 3
-Depends: firmware (>=12), mobilesubstrate, preferenceloader, applist (>= 1.5.0), rocketbootstrap (>=1.0.7~beta3)
+Depends: firmware (>=11), mobilesubstrate, preferenceloader, applist (>= 1.5.0), rocketbootstrap (>=1.0.7~beta3)
 Conflicts: com.expetelek.slices, com.subdiox.slices2
 Version: 3.0.3
 Architecture: iphoneos-arm
