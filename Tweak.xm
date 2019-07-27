@@ -177,7 +177,7 @@ static void loadSettings() {
 	isEnabled = (isEnabled || !keyExists);
 
 	use3DTouch = CFPreferencesGetAppBooleanValue(CFSTR("use3DTouch"), PREFERENCE_IDENTIFIER, &keyExists);
-	use3DTouch = (use3DTouch || !keyExists);
+	use3DTouch = (use3DTouch || keyExists);
 
 	showNewSliceOption = CFPreferencesGetAppBooleanValue(SHOW_NEW_SLICE_OPTION_KEY, PREFERENCE_IDENTIFIER, &keyExists);
 	showNewSliceOption = (showNewSliceOption || !keyExists);
