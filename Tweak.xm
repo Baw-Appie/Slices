@@ -79,7 +79,7 @@ static NSInteger version;
 
 %hook SBUIController
 -(void)activateApplication:(id)arg1 fromIcon:(id)arg2 location:(long long)arg3 activationSettings:(id)arg4 actions:(id)arg5 {
-	if (!isEnabled || use3DTouch) {
+	if (!isEnabled || (use3DTouch && [[[[UIApplication sharedApplication] keyWindow] traitCollection] forceTouchCapability] == UIForceTouchCapabilityAvailable)) {
 		%orig;
 	} else {
 		SBApplication *application = arg1;
