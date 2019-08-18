@@ -184,7 +184,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 //   const char *args[] = {"sh", "-c", "sudo launchctl stop com.apple.cfprefsd.xpc.daemon", NULL};
 //   posix_spawn(&pid, "/bin/sh", NULL, NULL, (char* const*)args, NULL);
 //
-// 	[NSThread sleepForTimeInterval:0.1];
+	[NSThread sleepForTimeInterval:0.1];
 }
 
 - (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler {
