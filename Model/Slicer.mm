@@ -176,7 +176,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	// 		[process stop];
 	// 	}
 	// } else {
-		BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, @"Killed from Slices");
+		BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, NULL);
 	// }
 
 	// must kill this in iOS 8

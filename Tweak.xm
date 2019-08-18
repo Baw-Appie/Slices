@@ -115,14 +115,18 @@ static NSInteger version;
 
 %hook SBUIIconForceTouchViewController
 -(void)_presentAnimated:(BOOL)arg1 withCompletionHandler:(void (^)())arg2 {
-	HBLogDebug(@"Running..");
-	// return %orig;
 	SBUIIconForceTouchIconViewWrapperView *wrapperView = MSHookIvar<SBUIIconForceTouchIconViewWrapperView *>(self, "_iconViewWrapperViewAbove");
-	HBLogDebug(@"wrapperView %@", wrapperView);
-	NSString *bundle = [wrapperView.iconView.icon applicationBundleID];
+  HBLogDebug(@"Welcome 3D Touch! %@", wrapperView.iconView);
+  NSString *bundle;
+  SBApplication *application;
+  if([wrapperView.iconView isKindOfClass:[objc_getClass("SearchUIAppIconButton") class]]) {
+    bundle = [(SFSearchResult *)[(SearchUIAppIconButton *)[wrapperView iconView] result] identifier];
+    application = [[objc_getClass("SBApplicationController") sharedInstance] applicationWithBundleIdentifier:bundle];
+  } else {
+    bundle = [wrapperView.iconView.icon applicationBundleID];
+    application = [wrapperView.iconView.icon application];
+  }
 	if(bundle && [wrapperView respondsToSelector:@selector(iconView)]) {
-		SBApplication *application = [wrapperView.iconView.icon application];
-
 		if (!isEnabled || !use3DTouch) {
 			HBLogDebug(@"Running orig");
 			return %orig;
