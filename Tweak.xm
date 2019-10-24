@@ -77,11 +77,11 @@ static NSInteger version;
 }
 %end
 
+#define forceTouchAvailable [[[[UIApplication sharedApplication] keyWindow] traitCollection] forceTouchCapability] == UIForceTouchCapabilityAvailable
+
 %hook SBUIController
 -(void)activateApplication:(id)arg1 fromIcon:(id)arg2 location:(long long)arg3 activationSettings:(id)arg4 actions:(id)arg5 {
-	if (!isEnabled || (use3DTouch && [[[[UIApplication sharedApplication] keyWindow] traitCollection] forceTouchCapability] == UIForceTouchCapabilityAvailable)) {
-		%orig;
-	} else {
+	if((isEnabled && !use3DTouch && forceTouchAvailable) || (isEnabled && !forceTouchAvailable)) {
 		SBApplication *application = arg1;
 		BOOL isUserApplication = NO;
 
@@ -109,7 +109,7 @@ static NSInteger version;
 		} else {
 			%orig;
 		}
-	}
+	} else %orig;
 }
 %end
 
