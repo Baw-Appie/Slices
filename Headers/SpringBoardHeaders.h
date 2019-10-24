@@ -12,7 +12,12 @@ void receivedLandscapeRotate();
 void receivedPortraitRotate();
 @end
 
+@interface FBProcessManager : NSObject
++(id)sharedInstance;
+-(id)createApplicationProcessForBundleID:(id)arg1 ;
+
 @interface FBApplicationProcess : NSObject
+-(void)killForReason:(long long)arg1 andReport:(BOOL)arg2 withDescription:(id)arg3 ;
 - (void)stop;
 @end
 

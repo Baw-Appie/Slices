@@ -168,6 +168,9 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		return;
 	}
 
+	FBApplicationProcess *process = [[objc_getClass("FBProcessManager") sharedInstance] createApplicationProcessForBundleID:self.application];
+  [process killForReason:1 andReport:NO withDescription:@"Killed by Slices"];
+
 	// if FBApplicationProcess has 'stop', use that
 	// Class FBApplicationProcessClass = objc_getClass("FBApplicationProcess");
 	// if ([FBApplicationProcessClass instancesRespondToSelector:@selector(stop)]) {
@@ -176,7 +179,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	// 		[process stop];
 	// 	}
 	// } else {
-		BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, NULL);
+		// BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, NULL);
 	// }
 
 	// must kill this in iOS 8
