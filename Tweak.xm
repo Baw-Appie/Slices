@@ -3,6 +3,7 @@
 #import "Headers/SpringBoardHeaders.h"
 #import <AppSupport/CPDistributedMessagingCenter.h>
 #import <rocketbootstrap/rocketbootstrap.h>
+#import "./SLWindow.h"
 
 #define PREFERENCE_IDENTIFIER CFSTR("com.subdiox.slicespreferences")
 #define ENABLED_KEY CFSTR("isEnabled")
@@ -30,6 +31,8 @@ static NSInteger version;
 	}
 
 	[prefs writeToFile:@"/var/mobile/Library/Preferences/com.subdiox.slicespreferences.plist" atomically:YES];
+
+	[SLWindow sharedInstance];
 }
 
 %new
@@ -45,6 +48,7 @@ static NSInteger version;
 	else if (slicer.slices.count < 1)
 		actionSheetTitle = Localize(@"All existing data will be copied into the new slice.");
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:actionSheetTitle message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+	[SLWindow sharedInstance].touchInjection = true;
 	NSArray *slices = slicer.slices;
 	for (NSString *slice in slices) {
 		[alert addAction:[UIAlertAction actionWithTitle:slice style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -52,6 +56,7 @@ static NSInteger version;
 			[slicer switchToSlice:action.title completionHandler:^(BOOL success) {
 				[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended: NO];
 			}];
+			[SLWindow sharedInstance].touchInjection = false;
 		}]];
 	}
 	if (showNewSliceOption) {
@@ -69,15 +74,18 @@ static NSInteger version;
 					[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended: NO];
 				}
 			}]];
-			[[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+			[[SLWindow sharedInstance].rootViewController presentViewController:alert animated:YES completion:nil];
+			[SLWindow sharedInstance].touchInjection = false;
 		}]];
 	}
-	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:nil]];
-	[[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+		[SLWindow sharedInstance].touchInjection = false;
+	}]];
+	[[SLWindow sharedInstance].rootViewController presentViewController:alert animated:YES completion:nil];
 }
 %end
 
-#define forceTouchAvailable [[[[UIApplication sharedApplication] keyWindow] traitCollection] forceTouchCapability] == UIForceTouchCapabilityAvailable
+#define forceTouchAvailable ([[[[UIApplication sharedApplication] keyWindow] traitCollection] forceTouchCapability] == UIForceTouchCapabilityAvailable)
 
 %hook SBUIController
 -(void)activateApplication:(id)arg1 fromIcon:(id)arg2 location:(long long)arg3 activationSettings:(id)arg4 actions:(id)arg5 {
@@ -181,7 +189,7 @@ static void loadSettings() {
 	isEnabled = (isEnabled || !keyExists);
 
 	use3DTouch = CFPreferencesGetAppBooleanValue(CFSTR("use3DTouch"), PREFERENCE_IDENTIFIER, &keyExists);
-	use3DTouch = (use3DTouch || keyExists);
+	use3DTouch = (use3DTouch || !keyExists);
 
 	showNewSliceOption = CFPreferencesGetAppBooleanValue(SHOW_NEW_SLICE_OPTION_KEY, PREFERENCE_IDENTIFIER, &keyExists);
 	showNewSliceOption = (showNewSliceOption || !keyExists);

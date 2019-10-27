@@ -168,8 +168,8 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		return;
 	}
 
-	FBApplicationProcess *process = [[objc_getClass("FBProcessManager") sharedInstance] createApplicationProcessForBundleID:self.application];
-  [process killForReason:1 andReport:NO withDescription:@"Killed by Slices"];
+	FBApplicationProcess *process = [[objc_getClass("FBProcessManager") sharedInstance] createApplicationProcessForBundleID:[self.application bundleIdentifier]];
+	[process killForReason:1 andReport:NO withDescription:nil];
 
 	// if FBApplicationProcess has 'stop', use that
 	// Class FBApplicationProcessClass = objc_getClass("FBApplicationProcess");
@@ -198,9 +198,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 			completionHandler(NO);
 		return;
 	}
-	if (targetSliceName.length > 0 && ![self.currentSlice isEqualToString:targetSliceName]) {
-		[self killApplication];
-	}
+	if (![self.currentSlice isEqualToString:targetSliceName]) [self killApplication];
 	UIAlertView *switchAlert = [[UIAlertView alloc] initWithTitle:@"Switch slices" message:@"Please wait. This may take some time." delegate:self cancelButtonTitle:nil otherButtonTitles:nil];
 	[switchAlert show];
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist"];

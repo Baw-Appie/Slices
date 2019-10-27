@@ -15,6 +15,14 @@ void receivedPortraitRotate();
 @interface FBProcessManager : NSObject
 +(id)sharedInstance;
 -(id)createApplicationProcessForBundleID:(id)arg1 ;
+@end
+
+@interface SFSearchResult
+@property (nonatomic, copy) NSString *identifier;
+@end
+@interface SearchUIAppIconButton : NSObject
+@property (retain) SFSearchResult * result;
+@end
 
 @interface FBApplicationProcess : NSObject
 -(void)killForReason:(long long)arg1 andReport:(BOOL)arg2 withDescription:(id)arg3 ;

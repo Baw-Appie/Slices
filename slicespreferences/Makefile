@@ -1,7 +1,8 @@
-# TARGET = iphone:9.2:8.0
-ARCHS = arm64 armv7
+GO_EASY_ON_ME = 1
+ARCHS = arm64
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
+  TARGET = iphone:12.1:9.2
   ARCHS += arm64e
 endif
 
