@@ -71,38 +71,19 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 }
 
 - (NSArray *)appGroupSlicers {
-	if (!self.appSharing)
-		return @[ ];
-
-	HBLogDebug(@"A3 detected!");
-	// HBLogDebug(@"A4 %@", [[[objc_getClass("SBApplicationController") sharedInstance] applicationWithBundleIdentifier:self.displayIdentifier] dataContainerURL]);
-
-	// Class SBApplicationControllerClass = objc_getClass("SBApplicationController");
-	// if (SBApplicationControllerClass)
-	// {
-	// 	NSString *mainSliceDirectory = [self.slicesDirectory stringByDeletingLastPathComponent];
-	// 	NSDictionary *appGroupContainers = [[[SBApplicationControllerClass sharedInstance] applicationWithBundleIdentifier:self.displayIdentifier] dataContainerURL];
-	// HBLogDebug(@"A4 %@", [[objc_getClass("LSBundleProxy") bundleProxyForIdentifier:self.displayIdentifier] groupContainerURLs]);
-
+	if (!self.appSharing) return @[ ];
 	Class LSBundleProxyClass = objc_getClass("LSBundleProxy");
 	if (LSBundleProxyClass && [LSBundleProxyClass instancesRespondToSelector:@selector(groupContainerURLs)])
 	{
 		NSString *mainSliceDirectory = [self.slicesDirectory stringByDeletingLastPathComponent];
-		HBLogDebug(@"A4 %@", mainSliceDirectory);
 		NSDictionary *appGroupContainers = [[LSBundleProxyClass bundleProxyForIdentifier:self.displayIdentifier] groupContainerURLs];
-		HBLogDebug(@"A5 %@", appGroupContainers);
 		NSMutableArray *appGroupSlicers = [[NSMutableArray alloc] init];
 		for (NSString *groupIdentifier in [appGroupContainers allKeys]) {
 			NSString *groupContainer = [appGroupContainers objectForKey:groupIdentifier];
 			NSString *groupSlicesDirectory = [mainSliceDirectory stringByAppendingPathComponent:groupIdentifier];
-
-			HBLogDebug(@"A2 %@", groupContainer);
 			AppGroupSlicer *appGroupSlicer = [[AppGroupSlicer alloc] initWithWorkingDirectory:groupContainer slicesDirectory:groupSlicesDirectory];
-			HBLogDebug(@"A6 %@", appGroupSlicer);
 			[appGroupSlicers addObject:appGroupSlicer];
 		}
-
-		HBLogDebug(@"A7 %@", appGroupSlicers);
 		return appGroupSlicers;
 	} else {
 		return @[ ];
@@ -191,7 +172,6 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 }
 
 - (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler {
-	HBLogDebug(@"switchToSlice");
 	if(targetSliceName == NULL) {
 		HBLogDebug(@"Slices: switchToSlice failed (NULL)");
 		if (completionHandler)
@@ -199,15 +179,15 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		return;
 	}
 	if (![self.currentSlice isEqualToString:targetSliceName]) [self killApplication];
-	UIAlertView *switchAlert = [[UIAlertView alloc] initWithTitle:@"Switch slices" message:@"Please wait. This may take some time." delegate:self cancelButtonTitle:nil otherButtonTitles:nil];
+	UIAlertView *switchAlert = [[UIAlertView alloc] initWithTitle:@"Switching slice" message:@"Please wait. It may take some time." delegate:self cancelButtonTitle:nil otherButtonTitles:nil];
 	[switchAlert show];
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist"];
 	BOOL success = [super switchToSlice:targetSliceName ignoreSuffixes:IGNORE_SUFFIXES];
 	if (!success) {
-		HBLogDebug(@"Slices: switchToSlice failed");
-		if (completionHandler)
-			completionHandler(NO);
-			[switchAlert dismissWithClickedButtonIndex:-1 animated:TRUE];
+		if (completionHandler) completionHandler(NO);
+		[switchAlert dismissWithClickedButtonIndex:-1 animated:TRUE];
+		UIAlertView *switchAlert = [[UIAlertView alloc] initWithTitle:@"switchToSlice Failed." message:@"switchToSlices could not be completed successfully." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil];
+		[switchAlert show];
 		return;
 	}
 

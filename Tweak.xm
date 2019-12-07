@@ -37,11 +37,9 @@ static NSInteger version;
 
 %new
 -(void)selectSlices:(NSString *)name withUserInfo:(NSDictionary *)userInfo {
-	HBLogDebug(@"Request Receviedjeinovaanscansc9unhauwdjh9poaunhxi!");
 	SBApplication *application = [[NSClassFromString(@"SBApplicationController") sharedInstance] applicationWithBundleIdentifier:userInfo[@"application"]];
 	Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
 	NSString *currentSlice = slicer.currentSlice;
-	HBLogDebug(@"Request %@!", currentSlice);
 	NSString *actionSheetTitle;
 	if (currentSlice.length > 0)
 		actionSheetTitle = [NSString stringWithFormat:@"%@: %@", Localize(@"Current Slice"), currentSlice];
@@ -154,19 +152,15 @@ static NSInteger version;
 				if (askOnTouch) {
 					arg2();
 					[self dismissAnimated:true withCompletionHandler:nil];
-					HBLogDebug(@"Request to SpringBoard...");
 					CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
 					rocketbootstrap_distributedmessagingcenter_apply(c);
 					NSDictionary * message = [NSDictionary dictionaryWithObjectsAndKeys:bundle, @"application", nil];
 					[c sendMessageName:@"selectSlices" userInfo:message];
 				} else {
 					if([currentSlice isEqualToString:slicer.defaultSlice]) {
-						HBLogDebug(@"switchToSlice already done!");
 						%orig;
 					} else {
-						HBLogDebug(@"try switchToSlice!");
 						[slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
-							HBLogDebug(@"switchToSlice Done!");
 							%orig;
 						}];
 					}
@@ -176,7 +170,6 @@ static NSInteger version;
 			}
 		}
 	} else {
-		HBLogDebug(@"No BundleID");
 		%orig;
 	}
 }

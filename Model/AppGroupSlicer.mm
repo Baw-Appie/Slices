@@ -14,16 +14,12 @@
 	if (!success)
 		return NO;
 
-	HBLogDebug(@"AppGroup Slices Created!");
 	NSFileManager *manager = [NSFileManager defaultManager];
 	NSArray *DIRECTORIES = @[ @"Library/Preferences", @"Library/Caches" ];
 	for (NSString *directory in DIRECTORIES) {
-		HBLogDebug(@"this dir is.. %@", directory);
-		HBLogDebug(@"this working dir is.. %@", self.workingDirectory);
 		NSString *patchedWorkingDirectory = [[NSString stringWithFormat:@"%@", self.workingDirectory] stringByReplacingOccurrencesOfString:@"file://" withString:@""];
 		NSString *currentDirectoryFullPath = [patchedWorkingDirectory stringByAppendingPathComponent:directory];
 		NSString *patchedCurrentDirectoryFullPath = [NSString stringWithFormat:@"%@", currentDirectoryFullPath];
-		HBLogDebug(@"currentDirectoryFullPath %@", patchedCurrentDirectoryFullPath);
 		if (![manager createDirectoryAtPath:patchedCurrentDirectoryFullPath withIntermediateDirectories:YES attributes:nil error:NULL])
 			success = NO;
 	}

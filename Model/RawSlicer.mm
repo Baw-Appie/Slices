@@ -75,7 +75,6 @@
 
 	// see if we're already on the slice
 	NSString *currentSlice = self.currentSlice;
-	HBLogDebug(@"Super switchToSlice %@, %@", currentSlice, targetSliceName);
 	if ([currentSlice isEqualToString:targetSliceName])
 		return YES;
 
@@ -88,14 +87,12 @@
 
 	// migrate new slice data into app directory
 	NSString *targetSlicePath = [self.slicesDirectory stringByAppendingPathComponent:targetSliceName];
-	HBLogDebug(@"self.slicesDirectory %@", self.slicesDirectory);
 	FolderMigrator *migrator = [[FolderMigrator alloc] initWithSourcePath:targetSlicePath destinationPath:self.workingDirectory];
 	migrator.ignorePrefixes = @[ @"gc_" ];
 	BOOL success = [migrator executeMigration];
 
 	// update current slice (if successful)
-	if (success)
-		self.currentSlice = targetSliceName;
+	if (success) self.currentSlice = targetSliceName;
 
 	return success;
 }
