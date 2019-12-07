@@ -13,6 +13,10 @@ extern NSString* const PSKeyNameKey;
 extern NSString* const PSCellClassKey;
 extern NSString* const PSEnabledKey;
 
+@interface PSEditableTableCell (Private)
+@property (nonatomic,strong) UITextField *textField;
+@end
+
 #define ADD_ACCOUNT_SPECIFIER_IDENTIFIER @"addAccount"
 
 @interface PSEditableListController : PSListController

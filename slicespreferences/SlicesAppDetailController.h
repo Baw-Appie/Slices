@@ -11,6 +11,9 @@
 #import "../Model/Slicer.h"
 #import "../Headers/LocalizationKeys.h"
 
+@interface PSSpecifier (Private)
+- (void)loadValuesAndTitlesFromDataSource;
+@end
 
 @interface PSEditableListController : PSListController
 -(void)editDoneTapped;

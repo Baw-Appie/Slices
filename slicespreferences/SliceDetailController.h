@@ -18,6 +18,10 @@ extern NSString* const PSCellClassKey;
 extern NSString* const PSRadioGroupCheckedSpecifierKey;
 extern NSString* const PSActionKey;
 
+@interface PSEditableTableCell (Private)
+@property (nonatomic,strong) UITextField *textField;
+@end
+
 @interface PSTextFieldSpecifier : PSSpecifier
 +(id)specifierWithSpecifier:(id)arg1 ;
 +(id)preferenceSpecifierNamed:(id)arg1 target:(id)arg2 set:(SEL)arg3 get:(SEL)arg4 detail:(Class)arg5 cell:(long long)arg6 edit:(Class)arg7 ;

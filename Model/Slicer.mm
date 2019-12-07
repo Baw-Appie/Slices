@@ -149,8 +149,10 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		return;
 	}
 
-	FBApplicationProcess *process = [[objc_getClass("FBProcessManager") sharedInstance] createApplicationProcessForBundleID:[self.application bundleIdentifier]];
-	[process killForReason:1 andReport:NO withDescription:nil];
+	if([objc_getClass("FBProcessManager") respondsToSelector:@selector(createApplicationProcessForBundleID:)]) {
+		FBApplicationProcess *process = [[objc_getClass("FBProcessManager") sharedInstance] createApplicationProcessForBundleID:[self.application bundleIdentifier]];
+		[process killForReason:1 andReport:NO withDescription:nil];
+	}
 
 	// if FBApplicationProcess has 'stop', use that
 	// Class FBApplicationProcessClass = objc_getClass("FBApplicationProcess");
@@ -160,7 +162,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	// 		[process stop];
 	// 	}
 	// } else {
-		// BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, NULL);
+		else BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, NULL);
 	// }
 
 	// must kill this in iOS 8

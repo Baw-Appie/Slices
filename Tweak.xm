@@ -58,12 +58,14 @@ static NSInteger version;
 		}]];
 	}
 	if (showNewSliceOption) {
-		[SLWindow sharedInstance].touchInjection = true;
 		[alert addAction:[UIAlertAction actionWithTitle:Localize(@"New Slice") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
 			UIAlertController *alert = [UIAlertController alertControllerWithTitle:Localize(@"New Slice") message:Localize(@"Enter the slice name") preferredStyle:UIAlertControllerStyleAlert];
-			[alert addAction: [UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:nil]];
+			[alert addAction: [UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+				[SLWindow sharedInstance].touchInjection = false;
+			}]];
 			[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
 				textField.placeholder = @"slice name";
+				[SLWindow sharedInstance].touchInjection = false;
 			}];
 			[alert addAction:[UIAlertAction actionWithTitle:Localize(@"OK") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 				NSString *sliceName = alert.textFields[0].text;
@@ -72,9 +74,10 @@ static NSInteger version;
 				if (created) {
 					[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended: NO];
 				}
+				[SLWindow sharedInstance].touchInjection = false;
 			}]];
+			[SLWindow sharedInstance].touchInjection = true;
 			[[SLWindow sharedInstance].rootViewController presentViewController:alert animated:YES completion:nil];
-			[SLWindow sharedInstance].touchInjection = false;
 		}]];
 	}
 	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
