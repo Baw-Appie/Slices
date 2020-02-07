@@ -26,13 +26,7 @@ static NSInteger version;
 	[messagingCenter registerForMessageName:@"selectSlices" target:self selector:@selector(selectSlices:withUserInfo:)];
 
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.subdiox.slicespreferences.plist"];
-	if (!prefs) {
-		prefs = [[NSMutableDictionary alloc] init];
-	}
-
-	[prefs writeToFile:@"/var/mobile/Library/Preferences/com.subdiox.slicespreferences.plist" atomically:YES];
-
-	[SLWindow sharedInstance];
+	if (!prefs) prefs = [[NSMutableDictionary alloc] init];
 }
 
 %new
