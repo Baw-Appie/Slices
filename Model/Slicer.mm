@@ -24,20 +24,14 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 	self.application = application;
 	self.applicationController = applicationController;
 	self.displayIdentifier = application.displayIdentifier;
-
 	HBLogDebug(@"Slices: application=%@, applicationController=%@, displayIdentifier=%@", self.application, self.applicationController, self.displayIdentifier);
 
 	// get application directory
-	if ([application respondsToSelector:@selector(dataContainerPath)]) {
-		self.workingDirectory = [application dataContainerPath];
-	} else {
-		self.workingDirectory = [application info].dataContainerURL.path;
-	}
+	if ([application respondsToSelector:@selector(dataContainerPath)]) self.workingDirectory = [application dataContainerPath];
+	else self.workingDirectory = [application info].dataContainerURL.path;
 
   HBLogDebug(@"Slices: workingDirectory=%@", self.workingDirectory);
-
-	if (!self.workingDirectory)
-		return nil;
+	if (!self.workingDirectory) return nil;
 
 	// get slices directory
 	self.slicesDirectory = [SLICES_DIRECTORY stringByAppendingPathComponent:self.displayIdentifier];
@@ -55,7 +49,7 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
   self.workingDirectory = [applicationList valueForKey:@"dataContainerPath" forDisplayIdentifier:displayIdentifier];
 
 	if (!self.workingDirectory) {
-		FBApplicationInfo *appInfo = [objc_getClass("LSApplicationProxy") applicationProxyForIdentifier: displayIdentifier];
+		FBApplicationInfo *appInfo = [objc_getClass("LSApplicationProxy") applicationProxyForIdentifier:displayIdentifier];
 		self.workingDirectory = appInfo.dataContainerURL.path;
 	}
 	HBLogDebug(@"A1 %@", self.workingDirectory);
@@ -73,13 +67,12 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 - (NSArray *)appGroupSlicers {
 	if (!self.appSharing) return @[ ];
 	Class LSBundleProxyClass = objc_getClass("LSBundleProxy");
-	if (LSBundleProxyClass && [LSBundleProxyClass instancesRespondToSelector:@selector(groupContainerURLs)])
-	{
+	if (LSBundleProxyClass && [LSBundleProxyClass instancesRespondToSelector:@selector(groupContainerURLs)]) {
 		NSString *mainSliceDirectory = [self.slicesDirectory stringByDeletingLastPathComponent];
 		NSDictionary *appGroupContainers = [[LSBundleProxyClass bundleProxyForIdentifier:self.displayIdentifier] groupContainerURLs];
 		NSMutableArray *appGroupSlicers = [[NSMutableArray alloc] init];
 		for (NSString *groupIdentifier in [appGroupContainers allKeys]) {
-			NSString *groupContainer = [appGroupContainers objectForKey:groupIdentifier];
+			NSString *groupContainer = [(NSURL *)[appGroupContainers objectForKey:groupIdentifier] path];
 			NSString *groupSlicesDirectory = [mainSliceDirectory stringByAppendingPathComponent:groupIdentifier];
 			AppGroupSlicer *appGroupSlicer = [[AppGroupSlicer alloc] initWithWorkingDirectory:groupContainer slicesDirectory:groupSlicesDirectory];
 			[appGroupSlicers addObject:appGroupSlicer];
@@ -230,12 +223,12 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		}
 	}
 
-	NSArray *appGroupSlicers = [self appGroupSlicers];
-	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
-		if (![appGroupSlicer createSlice:newSliceName]) {
-			success = NO;
-		}
-	}
+	// NSArray *appGroupSlicers = [self appGroupSlicers];
+	// for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
+	// 	if (![appGroupSlicer createSlice:newSliceName]) {
+	// 		success = NO;
+	// 	}
+	// }
 
 	// update default slice
 	if (self.defaultSlice.length < 1) {
@@ -246,20 +239,15 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 }
 
 - (BOOL)deleteSlice:(NSString *)sliceName {
-	if ([sliceName isEqualToString:self.currentSlice])
-		[self killApplication];
+	if ([sliceName isEqualToString:self.currentSlice]) [self killApplication];
 
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist" ];
 	BOOL success = [super deleteSlice:sliceName ignoreSuffixes:IGNORE_SUFFIXES];
-	if (!success) {
-		return NO;
-	}
+	if (!success) return NO;
 
 	NSArray *appGroupSlicers = [self appGroupSlicers];
 	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
-		if (![appGroupSlicer deleteSlice:sliceName]) {
-			success = NO;
-		}
+		if (![appGroupSlicer deleteSlice:sliceName]) success = NO;
 	}
 
 	NSArray *slices = self.slices;
@@ -281,11 +269,8 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		self.currentSlice = nil;
 		self.ignoreNextKill = YES;
 
-		if (defaultSlice.length > 0) {
-			[self switchToSlice:defaultSlice completionHandler:nil];
-		} else {
-			[self switchToSlice:slices[0] completionHandler:nil];
-		}
+		if (defaultSlice.length > 0) [self switchToSlice:defaultSlice completionHandler:nil];
+		else [self switchToSlice:slices[0] completionHandler:nil];
 	}
 
 	self.ignoreNextKill = NO;
@@ -294,20 +279,14 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 
 - (BOOL)renameSlice:(NSString *)originaSliceName toName:(NSString *)targetSliceName {
 	BOOL success = [super renameSlice:originaSliceName toName:targetSliceName];
-	if (!success) {
-		return NO;
-	}
+	if (!success) return NO;
 
 	NSArray *appGroupSlicers = [self appGroupSlicers];
 	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
-		if (![appGroupSlicer renameSlice:originaSliceName toName:targetSliceName]) {
-			success = NO;
-		}
+		if (![appGroupSlicer renameSlice:originaSliceName toName:targetSliceName]) success = NO;
 	}
 
-	if ([self.defaultSlice isEqualToString:originaSliceName]) {
-		self.defaultSlice = targetSliceName;
-	}
+	if ([self.defaultSlice isEqualToString:originaSliceName]) self.defaultSlice = targetSliceName;
 
 	return success;
 }

@@ -1,18 +1,15 @@
 #import "AppGroupSlicer.h"
 
 @implementation AppGroupSlicer
-- (BOOL)switchToSlice:(NSString *)targetSliceName
-{
+- (BOOL)switchToSlice:(NSString *)targetSliceName {
 	NSArray *IGNORE_SUFFIXES = @[ @".com.apple.mobile_container_manager.metadata.plist" ];
 	return [super switchToSlice:targetSliceName ignoreSuffixes:IGNORE_SUFFIXES];
 }
 
-- (BOOL)createSlice:(NSString *)newSliceName
-{
+- (BOOL)createSlice:(NSString *)newSliceName {
 	NSArray *IGNORE_SUFFIXES = @[ @".com.apple.mobile_container_manager.metadata.plist" ];
 	BOOL success = [super createSlice:newSliceName ignoreSuffixes:IGNORE_SUFFIXES];
-	if (!success)
-		return NO;
+	if (!success) return NO;
 
 	NSFileManager *manager = [NSFileManager defaultManager];
 	NSArray *DIRECTORIES = @[ @"Library/Preferences", @"Library/Caches" ];
@@ -20,15 +17,13 @@
 		NSString *patchedWorkingDirectory = [[NSString stringWithFormat:@"%@", self.workingDirectory] stringByReplacingOccurrencesOfString:@"file://" withString:@""];
 		NSString *currentDirectoryFullPath = [patchedWorkingDirectory stringByAppendingPathComponent:directory];
 		NSString *patchedCurrentDirectoryFullPath = [NSString stringWithFormat:@"%@", currentDirectoryFullPath];
-		if (![manager createDirectoryAtPath:patchedCurrentDirectoryFullPath withIntermediateDirectories:YES attributes:nil error:NULL])
-			success = NO;
+		if (![manager createDirectoryAtPath:patchedCurrentDirectoryFullPath withIntermediateDirectories:YES attributes:nil error:NULL]) success = NO;
 	}
 
 	return success;
 }
 
-- (BOOL)deleteSlice:(NSString *)sliceName
-{
+- (BOOL)deleteSlice:(NSString *)sliceName {
 	NSArray *IGNORE_SUFFIXES = @[ @".com.apple.mobile_container_manager.metadata.plist" ];
 	return [super deleteSlice:sliceName ignoreSuffixes:IGNORE_SUFFIXES];
 }

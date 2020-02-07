@@ -121,16 +121,10 @@ extern NSString* const PSDeletionActionKey;
 }
 
 - (void)createSlice:(PSSpecifier *)specifier {
-	UIAlertController *alert = [UIAlertController
-							alertControllerWithTitle:Localize(@"New Slice")
-															message:Localize(@"Enter the slice name")
-												preferredStyle:UIAlertControllerStyleAlert];
-	[alert addAction: [UIAlertAction
-											actionWithTitle:Localize(@"Cancel")
-																style:UIAlertActionStyleCancel
-															handler:nil]];
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:Localize(@"New Slice") message:Localize(@"Enter the slice name") preferredStyle:UIAlertControllerStyleAlert];
+	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:nil]];
 	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-			textField.text = [NSString stringWithFormat:Localize(@"Slice %d"), _slicer.slices.count + 1];
+		textField.text = [NSString stringWithFormat:Localize(@"Slice %d"), _slicer.slices.count + 1];
 	}];
 	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Create Slice") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 		// they want to create a slice
@@ -156,8 +150,6 @@ extern NSString* const PSDeletionActionKey;
 			[sp setProperty:NSStringFromSelector(@selector(removedSpecifier:)) forKey:PSDeletionActionKey];
 			[sp.properties setValue:_slicer forKey:@"slicer"];
 			[self insertSpecifier:sp atIndex:i animated:YES];
-			// NSArray *array = MSHookIvar<NSArray *>(_defaultSpecifier, "_values");
-			// HBLogDebug(@"Done!!!!!!!!!!!!!!!!!!!!!!!!!!! %@", array);
 			MSHookIvar<NSArray *>(_defaultSpecifier, "_values") = nil;
 			[_defaultSpecifier loadValuesAndTitlesFromDataSource];
 		} else {
