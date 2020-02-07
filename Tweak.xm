@@ -41,49 +41,48 @@ static NSInteger version;
 	Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
 	NSString *currentSlice = slicer.currentSlice;
 	NSString *actionSheetTitle;
-	if (currentSlice.length > 0)
-		actionSheetTitle = [NSString stringWithFormat:@"%@: %@", Localize(@"Current Slice"), currentSlice];
-	else if (slicer.slices.count < 1)
-		actionSheetTitle = Localize(@"All existing data will be copied into the new slice.");
+	if (currentSlice.length > 0) actionSheetTitle = [NSString stringWithFormat:@"%@: %@", Localize(@"Current Slice"), currentSlice];
+	else if (slicer.slices.count < 1) actionSheetTitle = Localize(@"All existing data will be copied into the new slice.");
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:actionSheetTitle message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-	[SLWindow sharedInstance].touchInjection = true;
-	NSArray *slices = slicer.slices;
+	SLWindow *window = [SLWindow sharedInstance];
+	window.touchInjection = true;
+
+	NSArray *slices = [slicer.slices sortedArrayUsingDescriptors:[NSArray arrayWithObject:[NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES]]];
 	for (NSString *slice in slices) {
 		[alert addAction:[UIAlertAction actionWithTitle:slice style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 			Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
 			[slicer switchToSlice:action.title completionHandler:^(BOOL success) {
-				[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended: NO];
+				[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended:NO];
 			}];
-			[SLWindow sharedInstance].touchInjection = false;
+			window.touchInjection = false;
 		}]];
 	}
+
 	if (showNewSliceOption) {
 		[alert addAction:[UIAlertAction actionWithTitle:Localize(@"New Slice") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
 			UIAlertController *alert = [UIAlertController alertControllerWithTitle:Localize(@"New Slice") message:Localize(@"Enter the slice name") preferredStyle:UIAlertControllerStyleAlert];
 			[alert addAction: [UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-				[SLWindow sharedInstance].touchInjection = false;
+				window.touchInjection = false;
 			}]];
 			[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
 				textField.placeholder = @"slice name";
-				[SLWindow sharedInstance].touchInjection = false;
+				window.touchInjection = false;
 			}];
 			[alert addAction:[UIAlertAction actionWithTitle:Localize(@"OK") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 				NSString *sliceName = alert.textFields[0].text;
 				Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
 				BOOL created = [slicer createSlice:sliceName];
-				if (created) {
-					[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended: NO];
-				}
-				[SLWindow sharedInstance].touchInjection = false;
+				if (created) [[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended:NO];
+				window.touchInjection = false;
 			}]];
-			[SLWindow sharedInstance].touchInjection = true;
-			[[SLWindow sharedInstance].rootViewController presentViewController:alert animated:YES completion:nil];
+			window.touchInjection = true;
+			[window.rootViewController presentViewController:alert animated:YES completion:nil];
 		}]];
 	}
 	[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-		[SLWindow sharedInstance].touchInjection = false;
+		window.touchInjection = false;
 	}]];
-	[[SLWindow sharedInstance].rootViewController presentViewController:alert animated:YES completion:nil];
+	[window.rootViewController presentViewController:alert animated:YES completion:nil];
 }
 %end
 

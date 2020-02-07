@@ -14,10 +14,8 @@
 	NSFileManager *manager = [NSFileManager defaultManager];
 	NSArray *DIRECTORIES = @[ @"Library/Preferences", @"Library/Caches" ];
 	for (NSString *directory in DIRECTORIES) {
-		NSString *patchedWorkingDirectory = [[NSString stringWithFormat:@"%@", self.workingDirectory] stringByReplacingOccurrencesOfString:@"file://" withString:@""];
-		NSString *currentDirectoryFullPath = [patchedWorkingDirectory stringByAppendingPathComponent:directory];
-		NSString *patchedCurrentDirectoryFullPath = [NSString stringWithFormat:@"%@", currentDirectoryFullPath];
-		if (![manager createDirectoryAtPath:patchedCurrentDirectoryFullPath withIntermediateDirectories:YES attributes:nil error:NULL]) success = NO;
+		NSString *currentDirectoryFullPath = [self.workingDirectory stringByAppendingPathComponent:directory];
+		if (![manager createDirectoryAtPath:currentDirectoryFullPath withIntermediateDirectories:YES attributes:nil error:NULL]) success = NO;
 	}
 
 	return success;

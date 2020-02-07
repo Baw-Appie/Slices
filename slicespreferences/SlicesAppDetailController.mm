@@ -64,7 +64,7 @@ extern NSString* const PSDeletionActionKey;
 	[specifiers addObject:slicesGroupSpecifier];
 
 	// create the specifiers
-	NSArray *slices = _slicer.slices;
+	NSArray *slices = [_slicer.slices sortedArrayUsingDescriptors:[NSArray arrayWithObject:[NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES]]];
 	for (NSString *slice in slices) {
 		PSSpecifier *specifier = [PSSpecifier preferenceSpecifierNamed:slice target:self set:nil get:nil detail:[SliceDetailController class] cell:PSLinkListCell edit:nil];
 		//specifier->action = @selector(renameSlice:);

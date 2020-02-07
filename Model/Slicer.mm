@@ -136,34 +136,18 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 }
 
 - (void)killApplication {
-	HBLogDebug(@"Killing Application!");
 	if (self.ignoreNextKill) {
 		self.ignoreNextKill = NO;
 		return;
 	}
 
-	if([objc_getClass("FBProcessManager") respondsToSelector:@selector(createApplicationProcessForBundleID:)]) {
-		FBApplicationProcess *process = [[objc_getClass("FBProcessManager") sharedInstance] createApplicationProcessForBundleID:[self.application bundleIdentifier]];
+	FBProcessManager *manager = [objc_getClass("FBProcessManager") sharedInstance];
+	if([manager respondsToSelector:@selector(createApplicationProcessForBundleID:)]) {
+		FBApplicationProcess *process = [manager createApplicationProcessForBundleID:[self.application bundleIdentifier]];
 		[process killForReason:1 andReport:NO withDescription:nil];
 	}
-
-	// if FBApplicationProcess has 'stop', use that
-	// Class FBApplicationProcessClass = objc_getClass("FBApplicationProcess");
-	// if ([FBApplicationProcessClass instancesRespondToSelector:@selector(stop)]) {
-	// 	if (self.application) {
-	// 		FBApplicationProcess *process = MSHookIvar<FBApplicationProcess *>(self.application, "_process");
-	// 		[process stop];
-	// 	}
-	// } else {
-		else BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, NULL);
-	// }
-
-	// must kill this in iOS 8
-// 	pid_t pid;
-//   const char *args[] = {"sh", "-c", "sudo launchctl stop com.apple.cfprefsd.xpc.daemon", NULL};
-//   posix_spawn(&pid, "/bin/sh", NULL, NULL, (char* const*)args, NULL);
-//
-	[NSThread sleepForTimeInterval:0.1];
+	else BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, NULL);
+	// [NSThread sleepForTimeInterval:0.1];
 }
 
 - (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler {
@@ -223,12 +207,12 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		}
 	}
 
-	// NSArray *appGroupSlicers = [self appGroupSlicers];
-	// for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
-	// 	if (![appGroupSlicer createSlice:newSliceName]) {
-	// 		success = NO;
-	// 	}
-	// }
+	NSArray *appGroupSlicers = [self appGroupSlicers];
+	for (AppGroupSlicer *appGroupSlicer in appGroupSlicers) {
+		if (![appGroupSlicer createSlice:newSliceName]) {
+			success = NO;
+		}
+	}
 
 	// update default slice
 	if (self.defaultSlice.length < 1) {
