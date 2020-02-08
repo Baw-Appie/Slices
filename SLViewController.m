@@ -12,4 +12,8 @@
   return _sharedSelf;
 }
 
+- (BOOL)shouldAutorotate {
+  return FALSE;
+}
+
 @end
