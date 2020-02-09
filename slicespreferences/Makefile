@@ -7,7 +7,7 @@ ADDITIONAL_OBJCFLAGS = -fobjc-arc
 include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = SlicesPreferences
-SlicesPreferences_FILES = SliceDetailController.mm SlicesEditableTableCell.mm ../Model/SSKeychain/SSKeychain.m ../Model/GameCenterAccountManager.mm ../Model/AppGroupSlicer.mm ../Model/RawSlicer.mm ../Model/Slicer.mm ../Model/FolderMigrator.mm ../Model/SliceSetting.mm GameCenterController.mm SlicesPreferencesListController.mm SlicesAppController.mm SlicesAppDetailController.mm
+SlicesPreferences_FILES = SliceDetailController.mm SlicesEditableTableCell.mm ../Model/SSKeychain/SSKeychain.m ../Model/GameCenterAccountManager.mm ../Model/AppGroupSlicer.mm ../Model/RawSlicer.mm ../Model/Slicer.mm ../Model/FolderMigrator.mm ../Model/SliceSetting.mm GameCenterController.mm SlicesPreferencesListController.mm SlicesAppController.mm SlicesAppDetailController.mm ../SLWindow.m ../SLViewController.m
 SlicesPreferences_INSTALL_PATH = /Library/PreferenceBundles
 SlicesPreferences_FRAMEWORKS = Social Security GameKit UIKit
 SlicesPreferences_PRIVATE_FRAMEWORKS = Preferences BackBoardServices
