@@ -1,5 +1,6 @@
 #import "Slicer.h"
 #import "../Headers/SpringBoardHeaders.h"
+#import "../SLWindow.h"
 
 @interface LSBundleProxy
 +(id)bundleProxyForIdentifier:(id)arg1;
@@ -52,7 +53,6 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		FBApplicationInfo *appInfo = [objc_getClass("LSApplicationProxy") applicationProxyForIdentifier:displayIdentifier];
 		self.workingDirectory = appInfo.dataContainerURL.path;
 	}
-	HBLogDebug(@"A1 %@", self.workingDirectory);
 
   if (!self.workingDirectory) {
 		HBLogDebug(@"[Slices] Error: working directory cannot be found");
@@ -147,26 +147,31 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		[process killForReason:1 andReport:NO withDescription:nil];
 	}
 	else BKSTerminateApplicationForReasonAndReportWithDescription(self.displayIdentifier, 5, NO, NULL);
-	// [NSThread sleepForTimeInterval:0.1];
+	[NSThread sleepForTimeInterval:0.1];
 }
 
 - (void)switchToSlice:(NSString *)targetSliceName completionHandler:(void (^)(BOOL))completionHandler {
 	if(targetSliceName == NULL) {
 		HBLogDebug(@"Slices: switchToSlice failed (NULL)");
-		if (completionHandler)
-			completionHandler(NO);
+		if (completionHandler) completionHandler(NO);
 		return;
 	}
 	if (![self.currentSlice isEqualToString:targetSliceName]) [self killApplication];
-	UIAlertView *switchAlert = [[UIAlertView alloc] initWithTitle:@"Switching slice" message:@"Please wait. It may take some time." delegate:self cancelButtonTitle:nil otherButtonTitles:nil];
-	[switchAlert show];
+	SLWindow *window = [SLWindow sharedInstance];
+	window.touchInjection = true;
+	UIAlertController *switchAlert = [UIAlertController alertControllerWithTitle:@"Switching slice" message:@"Please wait. It may take some time." preferredStyle:UIAlertControllerStyleAlert];
+	[window.rootViewController presentViewController:switchAlert animated:YES completion:nil];
 	NSArray *IGNORE_SUFFIXES = @[ @".app", @"iTunesMetadata.plist", @"iTunesArtwork", @"Slices", @".com.apple.mobile_container_manager.metadata.plist"];
 	BOOL success = [super switchToSlice:targetSliceName ignoreSuffixes:IGNORE_SUFFIXES];
 	if (!success) {
 		if (completionHandler) completionHandler(NO);
-		[switchAlert dismissWithClickedButtonIndex:-1 animated:TRUE];
-		UIAlertView *switchAlert = [[UIAlertView alloc] initWithTitle:@"switchToSlice Failed." message:@"switchToSlices could not be completed successfully." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil];
-		[switchAlert show];
+		[switchAlert dismissViewControllerAnimated:YES completion:^() {
+			UIAlertController *switchAlert = [UIAlertController alertControllerWithTitle:@"switchToSlice Failed." message:@"switchToSlices could not be completed successfully." preferredStyle:UIAlertControllerStyleAlert];
+			[window.rootViewController presentViewController:switchAlert animated:YES completion:nil];
+			[switchAlert addAction:[UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+				window.touchInjection = false;
+			}]];
+		}];
 		return;
 	}
 
@@ -177,14 +182,17 @@ extern "C" void BKSTerminateApplicationForReasonAndReportWithDescription(NSStrin
 		}
 	}
 
-	NSString *gameCenterAccount = [self gameCenterAccountForSlice:targetSliceName];
-	GameCenterAccountManager *gameCenterAccountManager = [GameCenterAccountManager sharedInstance];
-	[gameCenterAccountManager switchToAccount:gameCenterAccount completionHandler:^(BOOL gameCenterSuccess) {
+	// NSString *gameCenterAccount = [self gameCenterAccountForSlice:targetSliceName];
+	// GameCenterAccountManager *gameCenterAccountManager = [GameCenterAccountManager sharedInstance];
+	// [gameCenterAccountManager switchToAccount:gameCenterAccount completionHandler:^(BOOL gameCenterSuccess) {
 		if (completionHandler) {
-			completionHandler(success && gameCenterSuccess);
-			[switchAlert dismissWithClickedButtonIndex:-1 animated:TRUE];
+			// completionHandler(success && gameCenterSuccess);
+			[switchAlert dismissViewControllerAnimated:YES completion:^() {
+				completionHandler(success);
+				window.touchInjection = false;
+			}];
 		}
-	}];
+	// }];
 }
 
 - (BOOL)createSlice:(NSString *)newSliceName {
