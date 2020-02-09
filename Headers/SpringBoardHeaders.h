@@ -46,6 +46,10 @@ void receivedPortraitRotate();
 -(id)dataContainerPath;
 @end
 
+@interface SBIconController
+-(void)dismissAppIconForceTouchControllers:(/*^block*/id)arg1 ;
+@end
+
 @interface SBIcon : NSObject
 - (SBApplication *)application;
 - (id)applicationBundleID;

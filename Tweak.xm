@@ -143,11 +143,53 @@ static NSInteger version;
 					[c sendMessageName:@"selectSlices" userInfo:message];
 				} else {
 					if([currentSlice isEqualToString:slicer.defaultSlice]) %orig;
-					else [slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) { %orig; }];
+					else [slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
+						[[UIApplication sharedApplication] launchApplicationWithIdentifier:bundle suspended:NO];
+					}];
 				}
 			} else %orig;
 		}
 	} else %orig;
+}
+%end
+
+%hook SBIconController
+-(id)containerViewForPresentingContextMenuForIconView:(SBIconView *)arg1 {
+	NSLog(@"[Slices] _forceTouchControllerWillPresent %@", arg1);
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+		// [self dismissAppIconForceTouchControllers:nil];
+
+
+	  NSString *bundle = [arg1.icon applicationBundleID];
+	  SBApplication *application = [arg1.icon application];
+		if(bundle) {
+			if (!(!isEnabled || !use3DTouch)) {
+				BOOL isUserApplication = NO;
+				if ([application respondsToSelector:@selector(dataContainerPath)]) isUserApplication = [[application dataContainerPath] hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
+				else isUserApplication = [[application info].dataContainerURL.path hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
+				if(isUserApplication) {
+					Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
+					HBLogDebug(@"Slices: slicer=%@", slicer);
+					BOOL askOnTouch = slicer.askOnTouch;
+					NSString *currentSlice = slicer.currentSlice;
+					if (askOnTouch) {
+						[self dismissAppIconForceTouchControllers:nil];
+						CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
+						rocketbootstrap_distributedmessagingcenter_apply(c);
+						NSDictionary *message = @{@"application": bundle};
+						[c sendMessageName:@"selectSlices" userInfo:message];
+					} else {
+						if(![currentSlice isEqualToString:slicer.defaultSlice]) [slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
+							if(success) [[UIApplication sharedApplication] launchApplicationWithIdentifier:bundle suspended:NO];
+						}];
+					}
+				}
+			}
+		}
+
+
+	});
+	return %orig;
 }
 %end
 
