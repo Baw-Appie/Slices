@@ -46,7 +46,10 @@ static NSInteger version;
 		[alert addAction:[UIAlertAction actionWithTitle:slice style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 			Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
 			[slicer switchToSlice:action.title completionHandler:^(BOOL success) {
-				[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended:NO];
+				NSLog(@"[Slices] completionHandler start");
+				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+					[[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended:NO];
+				});
 			}];
 			window.touchInjection = false;
 		}]];
@@ -55,12 +58,11 @@ static NSInteger version;
 	if (showNewSliceOption) {
 		[alert addAction:[UIAlertAction actionWithTitle:Localize(@"New Slice") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
 			UIAlertController *alert = [UIAlertController alertControllerWithTitle:Localize(@"New Slice") message:Localize(@"Enter the slice name") preferredStyle:UIAlertControllerStyleAlert];
-			[alert addAction: [UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+			[alert addAction:[UIAlertAction actionWithTitle:Localize(@"Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
 				window.touchInjection = false;
 			}]];
 			[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
 				textField.placeholder = @"slice name";
-				window.touchInjection = false;
 			}];
 			[alert addAction:[UIAlertAction actionWithTitle:Localize(@"OK") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 				NSString *sliceName = alert.textFields[0].text;
@@ -69,7 +71,6 @@ static NSInteger version;
 				if (created) [[UIApplication sharedApplication] launchApplicationWithIdentifier:[application bundleIdentifier] suspended:NO];
 				window.touchInjection = false;
 			}]];
-			window.touchInjection = true;
 			[window.rootViewController presentViewController:alert animated:YES completion:nil];
 		}]];
 	}
@@ -88,11 +89,8 @@ static NSInteger version;
 		SBApplication *application = arg1;
 		BOOL isUserApplication = NO;
 
-		if ([application respondsToSelector:@selector(dataContainerPath)]) {
-			isUserApplication = [[application dataContainerPath] hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
-		} else {
-			isUserApplication = [[application info].dataContainerURL.path hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
-		}
+		if ([application respondsToSelector:@selector(dataContainerPath)]) isUserApplication = [[application dataContainerPath] hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
+		else isUserApplication = [[application info].dataContainerURL.path hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
 
 		if (isUserApplication) {
 			Slicer *slicer = [[Slicer alloc] initWithApplication:arg1 controller:[%c(SBApplicationController) sharedInstance]];
@@ -102,16 +100,10 @@ static NSInteger version;
 			if (askOnTouch) {
 				CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
 				rocketbootstrap_distributedmessagingcenter_apply(c);
-				NSDictionary * message = [NSDictionary dictionaryWithObjectsAndKeys:[application bundleIdentifier], @"application", nil];
+				NSDictionary *message = @{@"application": [application bundleIdentifier]};
 				[c sendMessageName:@"selectSlices" userInfo:message];
-			} else {
-				[slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
-					%orig;
-				}];
-			}
-		} else {
-			%orig;
-		}
+			} else [slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) { %orig; }];
+		} else %orig;
 	} else %orig;
 }
 %end
@@ -135,11 +127,8 @@ static NSInteger version;
 			return %orig;
 		} else {
 			BOOL isUserApplication = NO;
-			if ([application respondsToSelector:@selector(dataContainerPath)]) {
-				isUserApplication = [[application dataContainerPath] hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
-			} else {
-				isUserApplication = [[application info].dataContainerURL.path hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
-			}
+			if ([application respondsToSelector:@selector(dataContainerPath)]) isUserApplication = [[application dataContainerPath] hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
+			else isUserApplication = [[application info].dataContainerURL.path hasPrefix:@"/private/var/mobile/Containers/Data/Application/"];
 			if(isUserApplication) {
 				Slicer *slicer = [[Slicer alloc] initWithApplication:application controller:[%c(SBApplicationController) sharedInstance]];
 				HBLogDebug(@"Slices: slicer=%@", slicer);
@@ -150,24 +139,15 @@ static NSInteger version;
 					[self dismissAnimated:true withCompletionHandler:nil];
 					CPDistributedMessagingCenter *c = [CPDistributedMessagingCenter centerNamed:@"com.rpgfarm.slices"];
 					rocketbootstrap_distributedmessagingcenter_apply(c);
-					NSDictionary * message = [NSDictionary dictionaryWithObjectsAndKeys:bundle, @"application", nil];
+					NSDictionary *message = @{@"application": bundle};
 					[c sendMessageName:@"selectSlices" userInfo:message];
 				} else {
-					if([currentSlice isEqualToString:slicer.defaultSlice]) {
-						%orig;
-					} else {
-						[slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) {
-							%orig;
-						}];
-					}
+					if([currentSlice isEqualToString:slicer.defaultSlice]) %orig;
+					else [slicer switchToSlice:slicer.defaultSlice completionHandler:^(BOOL success) { %orig; }];
 				}
-			} else {
-				%orig;
-			}
+			} else %orig;
 		}
-	} else {
-		%orig;
-	}
+	} else %orig;
 }
 %end
 
